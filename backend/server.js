@@ -34,14 +34,11 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // Connect DB
+// Connect DB
 mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('MongoDB Connected ✅ - server.js:38');
+  .then(() => console.log('MongoDB Connected ✅'))
+  .catch((err) => console.error('MongoDB connection error ❌', err));
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} 🚀 - server.js:41`);
-    });
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error ❌ - server.js:45', err);
-  });
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} 🚀`);
+});
