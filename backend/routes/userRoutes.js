@@ -1,9 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { getBalance, deposit, transfer, executeTrade, getTransactions, getPortfolio } from '../controllers/walletController.js';
+import { getUserProfile, updateUserProfile } from '../controllers/userController.js';
 
 const router = express.Router();
 
+// Middleware to protect routes
 const protect = (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -20,11 +21,7 @@ const protect = (req, res, next) => {
   }
 };
 
-router.get('/balance', protect, getBalance);
-router.get('/transactions', protect, getTransactions);
-router.post('/deposit', protect, deposit);
-router.post('/transfer', protect, transfer);
-router.post('/trade', protect, executeTrade);
-router.get('/portfolio', protect, getPortfolio);
+router.get('/profile', protect, getUserProfile);
+router.put('/profile', protect, updateUserProfile);
 
 export default router;

@@ -12,6 +12,20 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  displayName: {
+    type: String,
+    trim: true,
+  },
+  username: {
+    type: String,
+    unique: true,
+    sparse: true, // Allows multiple null/undefined values without throwing unique index errors
+    trim: true,
+  },
+  bio: {
+    type: String,
+    maxLength: 500,
+  },
   walletBalance: {
     type: Number,
     default: 12500, // Base starting dummy balance
