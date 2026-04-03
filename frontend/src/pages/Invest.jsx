@@ -40,13 +40,13 @@ const Invest = () => {
     if (!token) return;
     const fetchData = async () => {
       try {
-        const balanceRes = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/balance`, {
+        const balanceRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/balance`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const balanceData = await balanceRes.json();
         if (balanceRes.ok) setBalance(balanceData.balance);
 
-        const portRes = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/portfolio`, {
+        const portRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/portfolio`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const portData = await portRes.json();
@@ -64,7 +64,7 @@ const Invest = () => {
      setTxStatus('loading');
      setTimeout(async () => {
         try {
-           const res = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/trade`, {
+           const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/trade`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
               body: JSON.stringify({ 

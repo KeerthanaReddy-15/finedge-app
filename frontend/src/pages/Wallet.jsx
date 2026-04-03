@@ -22,7 +22,7 @@ const Wallet = () => {
 
   const fetchBalance = async () => {
     try {
-      const res = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/balance`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/balance`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -37,7 +37,7 @@ const Wallet = () => {
     setTxStatus('loading');
     setTimeout(async () => {
        try {
-         const res = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/deposit`, {
+         const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/deposit`, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
            body: JSON.stringify({ amount })
@@ -63,7 +63,7 @@ const Wallet = () => {
     setTxStatus('loading');
     setTimeout(async () => {
        try {
-         const res = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/transfer`, {
+         const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/transfer`, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
            body: JSON.stringify({ targetEmail, amount })
