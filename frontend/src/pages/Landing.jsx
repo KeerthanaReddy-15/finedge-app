@@ -33,7 +33,6 @@ const Landing = () => {
                 </div>
                 
                 <div className="navbar-actions">
-                    <a href="/login" className="nav-login">Login</a>
                     <button onClick={() => navigate('/login')} className="btn-primary nav-btn">Get started</button>
                 </div>
             </nav>
