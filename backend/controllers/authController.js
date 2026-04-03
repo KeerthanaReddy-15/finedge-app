@@ -161,8 +161,11 @@ export const forgotPassword = async (req, res) => {
             await user.save();
         }
 
+        // Use the request origin, FRONTEND_URL env var, or fallback to localhost
+        const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5173';
+
         res.json({
-            devResetUrl: `http://localhost:5173/reset-password/${resetToken}`,
+            devResetUrl: `${frontendUrl}/reset-password/${resetToken}`,
             message: 'If email exists, reset link sent.'
         });
     } catch (err) {
