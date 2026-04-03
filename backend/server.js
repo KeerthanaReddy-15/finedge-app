@@ -16,6 +16,9 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
+app.get('/', (req, res) => {
+  res.send('Backend is running 🚀');
+});
 
 // Port
 const PORT = process.env.PORT || 5000;
@@ -26,12 +29,12 @@ const MONGO_URI = process.env.MONGO_URI;
 // Connect DB
 mongoose.connect(MONGO_URI)
   .then(() => {
-    console.log('MongoDB Connected ✅ - server.js:29');
+    console.log('MongoDB Connected ✅ - server.js:32');
 
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} 🚀 - server.js:32`);
+      console.log(`Server running on port ${PORT} 🚀 - server.js:35`);
     });
   })
   .catch((err) => {
-    console.error('MongoDB connection error ❌ - server.js:36', err);
+    console.error('MongoDB connection error ❌ - server.js:39', err);
   });
