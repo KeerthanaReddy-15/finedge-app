@@ -10,7 +10,10 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
@@ -29,12 +32,12 @@ const MONGO_URI = process.env.MONGO_URI;
 // Connect DB
 mongoose.connect(MONGO_URI)
   .then(() => {
-    console.log('MongoDB Connected ✅ - server.js:32');
+    console.log('MongoDB Connected ✅ - server.js:35');
 
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} 🚀 - server.js:35`);
+      console.log(`Server running on port ${PORT} 🚀 - server.js:38`);
     });
   })
   .catch((err) => {
-    console.error('MongoDB connection error ❌ - server.js:39', err);
+    console.error('MongoDB connection error ❌ - server.js:42', err);
   });
