@@ -13,7 +13,17 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    callback(null, true);
+    // Allow local development and the specific production frontend
+    const allowedOrigins = [
+      'http://localhost:5173', 
+      'http://172.20.10.2:5173',
+      process.env.FRONTEND_URL
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true
 }));
@@ -39,6 +49,6 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected ✅'))
   .catch((err) => console.error('MongoDB connection error ❌', err));
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} 🚀`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT} 🚀 (Bound to 0.0.0.0)`);
 });

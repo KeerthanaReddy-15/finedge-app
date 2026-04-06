@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ArrowDownLeft, ArrowUpRight, RefreshCw, Download, Activity, ArrowRight, Wallet, TrendingUp, DollarSign } from 'lucide-react';
+import { API_URL } from '../config';
 
 
 
@@ -14,7 +15,7 @@ const Transactions = () => {
        const token = localStorage.getItem('finedgeToken');
        if (!token) return;
          try {
-           const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/transactions`, {
+           const res = await fetch(`${API_URL}/api/wallet/transactions`, {
               headers: { 'Authorization': `Bearer ${token}` }
            });
            const data = await res.json();
@@ -87,16 +88,75 @@ const Transactions = () => {
   });
 
   return (
-    <div className="p-6 md:p-12 min-h-screen text-white/90 pb-24">
+    <div className="min-h-screen text-white/90 bg-[#070709]">
+
+      {/* ─── MOBILE LAYOUT ─── */}
+      <div className="lg:hidden">
+        <div className="max-w-[430px] mx-auto px-4 py-5 space-y-4">
+
+          {/* Ledger title handled by TopBar */}
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search transactions..." className="w-full bg-[#0f0f13] border border-white/8 rounded-2xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-600 outline-none" />
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {['All', 'Payments', 'Stocks', 'Crypto'].map((tab) => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab ? 'bg-purple-600 text-white' : 'bg-[#0f0f13] border border-white/8 text-gray-400'}`}>
+                {tab === 'All' ? 'All' : tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Transaction List */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl overflow-hidden">
+            {filteredTransactions.length === 0 ? (
+              <div className="py-10 flex flex-col items-center text-center">
+                <Search className="w-8 h-8 text-gray-600 mb-3" />
+                <p className="text-sm text-gray-500 font-bold">No transactions found</p>
+              </div>
+            ) : (
+              filteredTransactions.map((txn, idx) => (
+                <div key={txn.id} className={`flex items-center justify-between px-4 py-4 ${idx < filteredTransactions.length - 1 ? 'border-b border-white/5' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ${txn.bg} border border-white/10 flex items-center justify-center shrink-0`}>
+                      <div className="scale-[0.65]">{txn.icon}</div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white truncate max-w-[160px]">{txn.description}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{txn.date}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-sm font-black ${txn.isCredit ? 'text-green-400' : 'text-white'}`}>{txn.amount}</p>
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
+                      txn.status === 'Completed' ? 'bg-green-500/10 text-green-400' : txn.status === 'Pending' ? 'bg-orange-500/10 text-orange-400' : 'bg-red-500/10 text-red-400'
+                    }`}>{txn.status}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* ─── DESKTOP LAYOUT (unchanged) ─── */}
+      <div className="hidden lg:block p-10 min-h-screen pb-24">
       
       {/* Huge Header Section */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-10 mb-16 relative">
         <div className="absolute -top-20 -left-32 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="relative z-10 space-y-4">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl">
             Ledger.
           </h1>
-          <p className="text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
+          <p className="text-base sm:text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
             Track your ecosystem pulse in real-time.
           </p>
         </div>
@@ -136,7 +196,7 @@ const Transactions = () => {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-full h-[500px] bg-purple-600/5 rounded-[100%] blur-[150px] pointer-events-none transition-all duration-1000"></div>
 
         {/* Tab Controls */}
-        <div className="flex gap-4 md:gap-8 text-xl md:text-2xl font-bold overflow-x-auto scrollbar-hide mb-10 relative z-10 px-4">
+        <div className="flex gap-3 sm:gap-4 md:gap-8 text-sm sm:text-xl md:text-2xl font-bold overflow-x-auto scrollbar-hide mb-8 sm:mb-10 relative z-10 px-2">
           {['All', 'Payments', 'Stocks', 'Crypto'].map((tab) => (
             <button 
               key={tab}
@@ -223,6 +283,7 @@ const Transactions = () => {
         )}
 
       </div>
+    </div>
     </div>
   );
 };

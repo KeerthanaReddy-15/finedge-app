@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { API_URL } from '../config';
 import heroImage from '../assets/hero_illustration.png';
 import './Landing.css';
 
@@ -14,7 +15,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/forgot-password`, {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -40,10 +41,76 @@ const ForgotPassword = () => {
         <img src={heroImage} alt="FinEdge Background" className="hero-bg-image opacity-70" />
       </div>
 
-      <div className="relative z-10 w-full h-screen flex flex-col md:flex-row items-center justify-center px-8 max-w-full mx-auto gap-16 md:gap-20 xl:gap-32">
+      {/* ─── MOBILE LAYOUT ─── */}
+      <div className="lg:hidden relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 py-8">
+         <div className="max-w-[430px] mx-auto w-full">
+            <Link to="/" className="flex items-center justify-center gap-3 cursor-pointer mb-8 animate-[fadeInUp_0.8s_ease-out_forwards]">
+               <svg className="w-8 h-8 text-[#cca3ff]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+               </svg>
+               <span className="font-extrabold text-3xl tracking-tight text-white">FinEdge</span>
+            </Link>
+
+            <div className="w-full bg-[#1a1b22] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl animate-[fadeInUp_1s_ease-out_forwards]">
+               <Link to="/login" className="flex items-center gap-2 text-gray-400 hover:text-[#cca3ff] font-bold mb-8 w-fit transition-all text-xs uppercase tracking-widest">
+                 <ArrowLeft className="w-4 h-4" /> Back to Login
+               </Link>
+
+               {!isSent ? (
+                  <>
+                     <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 bg-[#2d1b4e] rounded-xl flex items-center justify-center border border-purple-500/20">
+                           <ShieldAlert className="w-6 h-6 text-[#cca3ff]" />
+                        </div>
+                        <h2 className="text-3xl font-bold text-white">Reset Form.</h2>
+                     </div>
+
+                     <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                           <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-2">Registered Email</label>
+                           <div className="relative">
+                              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 z-10" />
+                              <input 
+                                 type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com"
+                                 className="w-full bg-[#f2f4ff] border-none focus:ring-2 focus:ring-[#cca3ff] rounded-2xl py-4 pl-12 pr-4 text-base font-bold text-black placeholder-gray-400 outline-none transition-all shadow-sm"
+                              />
+                           </div>
+                        </div>
+
+                        <button type="submit" disabled={isLoading} className="w-full py-4 mt-8 rounded-2xl bg-white hover:bg-gray-200 text-black text-lg font-black transition-all flex items-center justify-center gap-3 shadow-md disabled:opacity-70 active:scale-95">
+                           {isLoading ? 'Processing...' : <>Send Link <ArrowRight className="w-6 h-6" /></>}
+                        </button>
+                     </form>
+                  </>
+               ) : (
+                  <div className="text-center py-6 animate-[fadeInUp_0.8s_ease-out_forwards]">
+                     <div className="w-20 h-20 bg-[#2d1b4e]/50 rounded-full flex items-center justify-center border border-purple-500/20 mx-auto mb-6">
+                        <Mail className="w-8 h-8 text-[#cca3ff]" />
+                     </div>
+                     <h2 className="text-2xl font-bold text-white mb-2">Check Inbox.</h2>
+                     <p className="text-sm text-gray-400 font-medium mb-8 p-4 bg-black/20 rounded-2xl border border-white/5">{email}</p>
+
+                     {resetLink && (
+                        <div className="mb-8 text-left bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl">
+                           <p className="text-[#cca3ff] font-bold text-[10px] uppercase tracking-widest mb-2 text-center">Dev Environment Link</p>
+                           <a href={resetLink} className="text-white hover:underline break-all text-xs block text-center opacity-70 italic">{resetLink}</a>
+                        </div>
+                     )}
+
+                     <button onClick={() => setIsSent(false)} className="text-xs font-bold text-gray-500 hover:text-white transition-colors tracking-widest uppercase">
+                        Use different email
+                     </button>
+                  </div>
+               )}
+            </div>
+         </div>
+      </div>
+
+      {/* ─── DESKTOP LAYOUT ─── */}
+      <div className="hidden lg:flex relative z-10 w-full min-h-screen flex-row items-center justify-center px-8 max-w-full mx-auto gap-20 xl:gap-32">
          
          {/* Left Side: Massive Typography */}
-         <div className="w-full md:w-[600px] flex flex-col justify-center animate-[fadeInUp_0.8s_ease-out_forwards]">
+         <div className="hidden md:flex w-full md:w-[600px] flex-col justify-center animate-[fadeInUp_0.8s_ease-out_forwards]">
             <Link to="/" className="flex items-center gap-3 cursor-pointer mb-10 w-fit">
                <svg className="w-9 h-9 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
@@ -133,7 +200,6 @@ const ForgotPassword = () => {
 
             </div>
          </div>
-
       </div>
     </div>
   );

@@ -86,7 +86,7 @@ export const setup2FA = async (req, res) => {
 
 export const verify2FASetup = async (req, res) => {
     try {
-        const { code } = req.body;
+        const code = req.body.code || req.body.token;
         const user = await User.findById(req.user.id);
         
         if (code === '000000') {
@@ -116,7 +116,7 @@ export const verify2FASetup = async (req, res) => {
 
 export const verify2FALogin = async (req, res) => {
     try {
-        const { code } = req.body;
+        const code = req.body.code || req.body.token;
         const user = await User.findById(req.user.id);
         
         if (code === '000000') {

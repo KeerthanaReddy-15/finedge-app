@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, User, Key, CheckCircle, AlertOctagon, RefreshCw, Plus } from 'lucide-react';
+import { API_URL } from '../config';
 
 const Settings = () => {
   // Identity Profile State
@@ -21,7 +22,7 @@ const Settings = () => {
     if (!token) return;
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/user/profile`, {
+        const res = await fetch(`${API_URL}/api/user/profile`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -42,7 +43,7 @@ const Settings = () => {
      e.preventDefault();
      setProfileStatus({ state: 'loading', message: '' });
      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/user/profile`, {
+        const res = await fetch(`${API_URL}/api/user/profile`, {
            method: 'PUT',
            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
            body: JSON.stringify(profile)
@@ -73,7 +74,7 @@ const Settings = () => {
      setPassStatus({ state: 'loading', message: '' });
 
      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/change-password`, {
+        const res = await fetch(`${API_URL}/api/auth/change-password`, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
            body: JSON.stringify({ currentPassword, newPassword })
@@ -96,7 +97,7 @@ const Settings = () => {
   const handleEnable2FA = async () => {
      setMfaStatus({ state: 'loading', message: '' });
      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/2fa/setup`, {
+        const res = await fetch(`${API_URL}/api/auth/2fa/setup`, {
            method: 'POST',
            headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -120,7 +121,7 @@ const Settings = () => {
      
      setMfaStatus({ state: 'verifying', message: '' });
      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/2fa/verify-setup`, {
+        const res = await fetch(`${API_URL}/api/auth/2fa/verify-setup`, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
            body: JSON.stringify({ token: mfaCode })
@@ -139,16 +140,126 @@ const Settings = () => {
   };
 
   return (
-    <div className="p-6 md:p-12 min-h-screen text-white/90 pb-24 space-y-12 relative overflow-hidden">
+    <div className="min-h-screen text-white/90 bg-[#070709]">
+
+      {/* ─── MOBILE LAYOUT ─── */}
+      <div className="lg:hidden">
+        <div className="max-w-[430px] mx-auto px-4 py-5 space-y-4">
+
+          {/* Account settings title handled by TopBar */}
+
+          {/* Profile Card */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl">
+            <div className="flex items-center gap-4 px-4 pt-4 pb-3 border-b border-white/5">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-white">Public Identity</p>
+                <p className="text-xs text-gray-500">Update your platform persona</p>
+              </div>
+            </div>
+            <form onSubmit={handleProfileUpdate} className="p-4 space-y-3">
+              <input type="text" value={profile.displayName} onChange={(e) => setProfile({ ...profile, displayName: e.target.value })} placeholder="Display Name"
+                className="w-full bg-[#111113] border border-white/8 rounded-xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-blue-500/50" />
+              <input type="text" value={profile.username} onChange={(e) => setProfile({ ...profile, username: e.target.value })} placeholder="@username"
+                className="w-full bg-[#111113] border border-white/8 rounded-xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-blue-500/50" />
+              <input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} placeholder="Email"
+                className="w-full bg-[#111113] border border-white/8 rounded-xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-blue-500/50" />
+              {profileStatus.state !== 'idle' && profileStatus.state !== 'loading' && (
+                <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${profileStatus.state === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-green-500/10 border-green-500/30 text-green-400'}`}>
+                  {profileStatus.state === 'error' ? <AlertOctagon className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />} {profileStatus.message}
+                </div>
+              )}
+              <button type="submit" disabled={profileStatus.state === 'loading'} className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-sm transition-all active:scale-95">
+                {profileStatus.state === 'loading' ? 'Updating...' : 'Update Identity'}
+              </button>
+            </form>
+          </div>
+
+          {/* Security Card */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl">
+            <div className="flex items-center gap-4 px-4 pt-4 pb-3 border-b border-white/5">
+              <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
+                <Key className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-white">Security Engine</p>
+                <p className="text-xs text-gray-500">Rotate your master password</p>
+              </div>
+            </div>
+            <form onSubmit={handlePasswordChange} className="p-4 space-y-3">
+              <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password"
+                className="w-full bg-[#111113] border border-white/8 rounded-xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-purple-500/50" />
+              <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password"
+                className="w-full bg-[#111113] border border-white/8 rounded-xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-purple-500/50" />
+              {passStatus.state !== 'idle' && passStatus.state !== 'loading' && (
+                <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${passStatus.state === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-green-500/10 border-green-500/30 text-green-400'}`}>
+                  {passStatus.state === 'error' ? <AlertOctagon className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />} {passStatus.message}
+                </div>
+              )}
+              <button type="submit" disabled={passStatus.state === 'loading'} className="w-full py-3 bg-white/5 hover:bg-purple-600/20 text-white rounded-xl font-black text-sm transition-all border border-white/10 active:scale-95">
+                {passStatus.state === 'loading' ? 'Encrypting...' : 'Rotate Master Password'}
+              </button>
+            </form>
+          </div>
+
+          {/* 2FA Card */}
+          <div className={`bg-[#0f0f13] border ${mfaStatus.state === 'success' ? 'border-green-500/30' : 'border-white/8'} rounded-2xl`}>
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center">
+                  <Shield className={`w-5 h-5 ${mfaStatus.state === 'success' ? 'text-green-400' : 'text-red-500'}`} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-white">2FA Guard</p>
+                  <p className="text-xs text-gray-500">Hardware binding</p>
+                </div>
+              </div>
+              {mfaStatus.state === 'success' && <span className="text-xs font-black text-green-400 bg-green-500/10 px-2 py-1 rounded-lg border border-green-500/20">LOCKED</span>}
+            </div>
+            <div className="p-4">
+              {(mfaStatus.state === 'idle' || mfaStatus.state === 'error') && (
+                <button onClick={handleEnable2FA} className="w-full py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
+                  <Plus className="w-4 h-4" /> Initialize 2FA Protocol
+                </button>
+              )}
+              {(mfaStatus.state === 'setting_up' || mfaStatus.state === 'verifying') && (
+                <div className="space-y-4">
+                  <div className="bg-white p-3 rounded-2xl w-40 mx-auto border-4 border-purple-500">
+                    {qrCode ? <img src={qrCode} alt="2FA QR" className="w-full h-full rounded-xl" /> : <div className="w-full h-32 flex items-center justify-center"><RefreshCw className="animate-spin text-purple-500 w-6 h-6" /></div>}
+                  </div>
+                  <p className="text-xs text-center text-gray-400">Scan with Google Authenticator or Authy</p>
+                  <form onSubmit={handleVerify2FA} className="flex gap-2">
+                    <input type="text" maxLength="6" required value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))} placeholder="000000"
+                      className="flex-1 bg-black border border-purple-500/30 focus:border-purple-500 rounded-xl py-3 px-4 text-xl tracking-[1em] text-center font-black text-white outline-none" />
+                    <button type="submit" className="px-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-sm transition-all">Verify</button>
+                  </form>
+                </div>
+              )}
+              {mfaStatus.state === 'success' && (
+                <div className="text-center py-3">
+                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                  <p className="text-sm font-black text-white">Hardware Binding Active</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ─── DESKTOP LAYOUT (unchanged) ─── */}
+      <div className="hidden lg:block p-6 md:p-12 min-h-screen pb-24 space-y-8 md:space-y-12 relative overflow-hidden">
       
       {/* Massive Header Section */}
       <div className="relative mb-12">
         <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none"></div>
         <div className="relative z-10 space-y-4">
-          <h1 className="text-6xl md:text-[5rem] font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl">
+          <h1 className="text-3xl sm:text-5xl md:text-[5rem] font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl">
             Settings.
           </h1>
-          <p className="text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
+          <p className="text-base sm:text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
             Manage your operational identity and platform security.
           </p>
         </div>
@@ -311,6 +422,7 @@ const Settings = () => {
 
          </div>
       </div>
+    </div>
     </div>
   );
 };

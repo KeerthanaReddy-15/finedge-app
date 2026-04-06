@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, RefreshCw, BarChart2, DollarSign, CheckCircle, AlertOctagon, X } from 'lucide-react';
+import { API_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 
 const btcData = [
@@ -93,18 +94,19 @@ const Trading = () => {
 
   const currentPrice = activePair === 'BTC' ? 66850.00 : 3520.00;
   const currentTotal = tradeAmount ? (Number(tradeAmount) * currentPrice).toFixed(2) : '0.00';
+  const assetBalance = portfolio.find(p => p.assetSymbol === activePair)?.amount || 0;
 
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
       try {
-        const balanceRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/balance`, {
+        const balanceRes = await fetch(`${API_URL}/api/wallet/balance`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const balanceData = await balanceRes.json();
         if (balanceRes.ok) setBalance(balanceData.balance);
         
-        const portRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/portfolio`, {
+        const portRes = await fetch(`${API_URL}/api/wallet/portfolio`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const portData = await portRes.json();
@@ -125,7 +127,7 @@ const Trading = () => {
      // Simulate slight network delay for high-frequency feel
      setTimeout(async () => {
         try {
-           const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/trade`, {
+           const res = await fetch(`${API_URL}/api/wallet/trade`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
               body: JSON.stringify({ 
@@ -160,23 +162,135 @@ const Trading = () => {
   const colorMap = activePair === 'BTC' ? { hex: '#F7931A', glow: 'from-orange-600/10' } : { hex: '#627EEA', glow: 'from-blue-600/10' };
 
   return (
-    <div className="p-6 md:p-12 min-h-screen text-white/90 pb-24 space-y-12 relative overflow-hidden">
+    <div className="min-h-screen text-white/90 bg-[#070709]">
+
+      {/* ─── MOBILE LAYOUT ─── */}
+      <div className="lg:hidden">
+        <div className="max-w-[430px] mx-auto px-4 py-5 space-y-4">
+
+          <div className="flex justify-end">
+            <button onClick={() => navigate('/invest')}
+              className="text-xs font-bold bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-xl active:scale-95 transition-all">
+              Equities →
+            </button>
+          </div>
+
+          {/* Pair Selector + Price */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <select value={activePair} onChange={(e) => setActivePair(e.target.value)}
+                className="bg-transparent text-white text-lg font-black outline-none appearance-none">
+                <option value="BTC">BTC / USD</option>
+                <option value="ETH">ETH / USD</option>
+              </select>
+              <span className={`px-2 py-1 ${activePair === 'BTC' ? 'bg-orange-500/20 text-orange-400' : 'bg-blue-500/20 text-blue-400'} font-black text-xs rounded-lg`}>
+                {activePair === 'BTC' ? '+5.21%' : '+2.85%'}
+              </span>
+            </div>
+            <p className="text-3xl font-black text-white">${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          </div>
+
+          {/* Chart */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="mGradientArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={colorMap.hex} stopOpacity={0.4} />
+                      <stop offset="100%" stopColor={colorMap.hex} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                  <XAxis dataKey="time" tick={{ fill: '#6b7280', fontSize: 9 }} tickLine={false} axisLine={false} dy={6} />
+                  <YAxis hide />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f0f13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }} labelStyle={{ color: '#9CA3AF' }} itemStyle={{ fontWeight: 700 }} />
+                  <Area type="monotone" dataKey="price" stroke={colorMap.hex} strokeWidth={3} fill="url(#mGradientArea)" dot={false} activeDot={{ r: 5, fill: '#fff', stroke: colorMap.hex, strokeWidth: 2 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex gap-1.5 mt-3 justify-end">
+              {['1H', '1D', '1W', '1M'].map(t => (
+                <button key={t} className="w-8 h-8 rounded-lg bg-white/5 text-gray-400 text-xs font-bold border border-white/5">{t}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Order Form */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
+            <div className="flex bg-black p-1 rounded-xl mb-4 border border-white/5">
+              <button onClick={() => setOrderType('buy')}
+                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${orderType === 'buy' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'text-gray-500'}`}>Buy</button>
+              <button onClick={() => setOrderType('sell')}
+                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${orderType === 'sell' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'text-gray-500'}`}>Sell</button>
+            </div>
+            <form onSubmit={executeTrade} className="space-y-3">
+              <div className="relative">
+                <input type="number" step="0.01" min="0.01" required value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} placeholder="0.00"
+                  className="w-full bg-black border border-white/10 focus:border-white/30 rounded-xl py-3 pl-4 pr-16 text-xl font-black text-white outline-none" />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">{activePair}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 font-bold">Total</span>
+                <span className={`font-black ${orderType === 'buy' ? 'text-white' : 'text-green-400'}`}>${(Number(currentTotal)).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              </div>
+
+              {/* Validation Warnings Mobile */}
+              {orderType === 'buy' && Number(currentTotal) > balance && (
+                <div className="text-red-400 text-xs font-bold bg-red-500/10 p-2 rounded-xl text-center border border-red-500/20">
+                  Insufficient funds
+                </div>
+              )}
+              {orderType === 'sell' && (Number(tradeAmount) > assetBalance) && (
+                <div className="text-red-400 text-xs font-bold bg-red-500/10 p-2 rounded-xl text-center border border-red-500/20">
+                  Insufficient {activePair} balance
+                </div>
+              )}
+
+              <div className="space-y-2 pt-2">
+                <div className="flex justify-between text-xs bg-white/5 p-3 rounded-xl">
+                  <span className="text-gray-500 font-bold">Trading Balance</span>
+                  <span className="text-white font-black">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-xs bg-white/5 p-3 rounded-xl border border-white/5">
+                  <span className="text-gray-500 font-bold">{activePair} Owned</span>
+                  <span className="text-[#cca3ff] font-black">{assetBalance.toFixed(4)} {activePair}</span>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={
+                  (orderType === 'buy' && Number(currentTotal) > balance) || 
+                  (orderType === 'sell' && (Number(tradeAmount) > assetBalance || Number(tradeAmount) <= 0))
+                }
+                className={`w-full py-4 mt-4 rounded-2xl text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 ${orderType === 'buy' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>
+                {orderType === 'buy' ? `Buy ${activePair}` : `Sell ${activePair}`}
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ─── DESKTOP LAYOUT (unchanged) ─── */}
+      <div className="hidden lg:block p-6 md:p-12 min-h-screen pb-24 space-y-8 md:space-y-12 relative overflow-hidden">
       
       {/* Massive Header Section */}
-      <div className="relative mb-12">
+      <div className="relative mb-6 md:mb-12">
         <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] bg-gradient-to-br ${colorMap.glow} to-transparent rounded-full blur-[150px] pointer-events-none transition-colors duration-1000`}></div>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 gap-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4">
            <div>
-              <h1 className="text-6xl md:text-[5rem] font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl mb-4">
+              <h1 className="text-3xl sm:text-5xl md:text-[5rem] font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl mb-2 md:mb-4">
                 Crypto Exchange.
               </h1>
-              <p className="text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
+              <p className="text-base sm:text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
                 Live market execution powered by your digital wallet.
               </p>
            </div>
            
-           <div className="flex gap-4">
-              <button onClick={() => navigate('/invest')} className="px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold transition-colors">
+           <div className="flex gap-3">
+              <button onClick={() => navigate('/invest')} className="px-4 py-3 sm:px-6 sm:py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold transition-colors text-sm sm:text-base whitespace-nowrap">
                 Switch to Equities
               </button>
            </div>
@@ -190,31 +304,31 @@ const Trading = () => {
          <div className="xl:col-span-8 space-y-10">
             
             {/* Chart Module */}
-            <div className="bg-[#0D0D0E] border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden group transition-colors shadow-2xl h-[650px] flex flex-col">
+            <div className="bg-[#0D0D0E] border border-white/5 rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-8 md:p-12 relative overflow-hidden group transition-colors shadow-2xl h-[380px] sm:h-[500px] md:h-[650px] flex flex-col">
                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-gradient-to-r ${colorMap.glow} to-transparent blur-[120px] pointer-events-none rounded-full transition-colors duration-1000`}></div>
                
                {/* Chart Header & Picker */}
-               <div className="flex justify-between items-start mb-8 relative z-10 w-full">
+               <div className="flex flex-wrap justify-between items-start mb-4 sm:mb-8 relative z-10 w-full gap-3">
                   <div>
-                    <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
                        <select 
                           value={activePair} 
                           onChange={(e) => setActivePair(e.target.value)}
-                          className="bg-black border border-white/20 text-white text-3xl font-black rounded-xl px-6 py-3 outline-none cursor-pointer appearance-none shadow-xl"
+                          className="bg-black border border-white/20 text-white text-base sm:text-2xl font-black rounded-xl px-3 py-2 sm:px-6 sm:py-3 outline-none cursor-pointer appearance-none shadow-xl"
                        >
                           <option value="BTC">BTC / USD</option>
                           <option value="ETH">ETH / USD</option>
                        </select>
-                       <span className={`px-4 py-2 ${activePair === 'BTC' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-blue-500/20 text-blue-400 border-blue-500/30'} font-black text-xl rounded-xl border`}>
+                       <span className={`px-2 py-1 sm:px-4 sm:py-2 ${activePair === 'BTC' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-blue-500/20 text-blue-400 border-blue-500/30'} font-black text-sm sm:text-xl rounded-xl border`}>
                           {activePair === 'BTC' ? '+5.21%' : '+2.85%'}
                        </span>
                     </div>
-                    <p className="text-4xl text-white font-bold">${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-2xl sm:text-4xl text-white font-bold">${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-1 sm:gap-4">
                      {['1H', '1D', '1W', '1M'].map(time => (
-                        <button key={time} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-bold text-lg border border-white/5 flex items-center justify-center transition-all">
+                        <button key={time} className="w-9 h-9 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-bold text-xs sm:text-lg border border-white/5 flex items-center justify-center transition-all">
                            {time}
                         </button>
                      ))}
@@ -247,10 +361,10 @@ const Trading = () => {
             </div>
 
             {/* Active Sub-Positions */}
-            <div className="bg-[#0D0D0E] border border-white/5 rounded-[3rem] p-10 relative overflow-hidden shadow-2xl">
-               <h3 className="text-3xl font-black text-white mb-8">Active {activePair} Positions</h3>
+            <div className="bg-[#0D0D0E] border border-white/5 rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-10 relative overflow-hidden shadow-2xl">
+               <h3 className="text-xl sm:text-3xl font-black text-white mb-5 sm:mb-8">Active {activePair} Positions</h3>
                <div className="overflow-x-auto w-full">
-                  <table className="w-full text-left">
+                  <table className="w-full text-left min-w-[420px]">
                      <thead>
                        <tr className="border-b border-white/10 text-base font-bold text-gray-500 uppercase tracking-widest">
                           <th className="pb-6">Market</th>
@@ -366,7 +480,7 @@ const Trading = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
           
-          <div className={`relative bg-[#0A0912] border border-white/10 w-full max-w-2xl rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden transition-all duration-500 transform ${txStatus === 'success' ? 'scale-105 border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.3)]' : txStatus === 'error' ? 'scale-[0.98] border-red-500/50 shadow-[0_0_100px_rgba(239,68,68,0.3)]' : 'scale-100'}`}>
+          <div className={`relative bg-[#0A0912] border border-white/10 w-full max-w-2xl mx-4 rounded-[2rem] sm:rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden transition-all duration-500 transform ${txStatus === 'success' ? 'scale-105 border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.3)]' : txStatus === 'error' ? 'scale-[0.98] border-red-500/50 shadow-[0_0_100px_rgba(239,68,68,0.3)]' : 'scale-100'}`}>
             
             {txStatus !== 'loading' && (
                <button type="button" onClick={() => setTxStatus('idle')} className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors z-30 cursor-pointer">
@@ -375,36 +489,36 @@ const Trading = () => {
             )}
 
             {txStatus === 'loading' && (
-              <div className="p-24 flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <div className="p-12 sm:p-20 flex flex-col items-center justify-center text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-purple-500/10 animate-pulse pointer-events-none"></div>
-                <div className="w-24 h-24 border-8 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-8 relative z-10"></div>
-                <h3 className="text-4xl font-black text-white">Filling Market Order</h3>
-                <p className="text-xl text-gray-400 mt-4 font-medium">Validating block and modifying ledger...</p>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 border-8 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-6 relative z-10"></div>
+                <h3 className="text-2xl sm:text-4xl font-black text-white">Filling Market Order</h3>
+                <p className="text-base text-gray-400 mt-3 font-medium">Validating block and modifying ledger...</p>
               </div>
             )}
 
             {txStatus === 'success' && (
-              <div className="p-24 flex flex-col items-center justify-center text-center relative">
+              <div className="p-10 sm:p-16 flex flex-col items-center justify-center text-center relative">
                 <div className="absolute inset-0 bg-green-500/10 pointer-events-none"></div>
-                <div className="w-32 h-32 bg-green-500/20 rounded-full flex items-center justify-center mb-8 border-4 border-green-500/30 relative z-10">
-                  <CheckCircle className="w-20 h-20 text-green-400" />
+                <div className="w-20 h-20 sm:w-28 sm:h-28 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-green-500/30 relative z-10">
+                  <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-400" />
                 </div>
-                <h3 className="text-5xl font-black text-white mb-4 relative z-10">Trade Executed</h3>
-                <p className="text-2xl text-green-400 font-bold max-w-md mb-8 relative z-10">{txMessage}</p>
-                <p className="text-xl text-gray-400 font-medium relative z-10">Your new wallet balance: <span className="text-white font-bold">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></p>
-                <button type="button" onClick={() => setTxStatus('idle')} className="mt-10 px-10 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-xl transition-all relative z-10 cursor-pointer">Close Terminal</button>
+                <h3 className="text-2xl sm:text-4xl font-black text-white mb-3 relative z-10">Trade Executed</h3>
+                <p className="text-base sm:text-xl text-green-400 font-bold max-w-sm mb-5 relative z-10">{txMessage}</p>
+                <p className="text-sm text-gray-400 font-medium relative z-10">New balance: <span className="text-white font-bold">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></p>
+                <button type="button" onClick={() => setTxStatus('idle')} className="mt-8 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-lg transition-all relative z-10 cursor-pointer">Close Terminal</button>
               </div>
             )}
 
             {txStatus === 'error' && (
-              <div className="p-24 flex flex-col items-center justify-center text-center relative">
+              <div className="p-10 sm:p-16 flex flex-col items-center justify-center text-center relative">
                 <div className="absolute inset-0 bg-red-500/10 pointer-events-none"></div>
-                <div className="w-32 h-32 bg-red-500/20 rounded-full flex items-center justify-center mb-8 border-4 border-red-500/30 relative z-10">
-                  <AlertOctagon className="w-20 h-20 text-red-500" />
+                <div className="w-20 h-20 sm:w-28 sm:h-28 bg-red-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-red-500/30 relative z-10">
+                  <AlertOctagon className="w-12 h-12 sm:w-16 sm:h-16 text-red-500" />
                 </div>
-                <h3 className="text-5xl font-black text-white mb-4 relative z-10">Execution Failed</h3>
-                <p className="text-2xl text-red-400 font-bold max-w-md relative z-10">{txMessage}</p>
-                <button type="button" onClick={() => setTxStatus('idle')} className="mt-12 px-10 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-xl transition-all relative z-10 cursor-pointer">Dismiss</button>
+                <h3 className="text-2xl sm:text-4xl font-black text-white mb-3 relative z-10">Execution Failed</h3>
+                <p className="text-base sm:text-xl text-red-400 font-bold max-w-sm relative z-10">{txMessage}</p>
+                <button type="button" onClick={() => setTxStatus('idle')} className="mt-8 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-lg transition-all relative z-10 cursor-pointer">Dismiss</button>
               </div>
             )}
 
@@ -413,7 +527,8 @@ const Trading = () => {
       )}
 
     </div>
-  );
+  </div>
+);
 };
 
 export default Trading;

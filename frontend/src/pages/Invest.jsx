@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import { TrendingUp, TrendingDown, Briefcase, Play, DollarSign, Activity, Percent, CheckCircle, AlertOctagon, X } from 'lucide-react';
+import { API_URL } from '../config';
 
 const sparklineDataPos = [
   { value: 10 }, { value: 15 }, { value: 13 }, { value: 20 },
@@ -40,13 +41,13 @@ const Invest = () => {
     if (!token) return;
     const fetchData = async () => {
       try {
-        const balanceRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/balance`, {
+        const balanceRes = await fetch(`${API_URL}/api/wallet/balance`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const balanceData = await balanceRes.json();
         if (balanceRes.ok) setBalance(balanceData.balance);
 
-        const portRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/portfolio`, {
+        const portRes = await fetch(`${API_URL}/api/wallet/portfolio`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const portData = await portRes.json();
@@ -64,7 +65,7 @@ const Invest = () => {
      setTxStatus('loading');
      setTimeout(async () => {
         try {
-           const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wallet/trade`, {
+           const res = await fetch(`${API_URL}/api/wallet/trade`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
               body: JSON.stringify({ 
@@ -112,30 +113,147 @@ const Invest = () => {
   const pnlPercentage = totalCostBasis > 0 ? ((totalPnL / totalCostBasis) * 100).toFixed(2) : '0.00';
 
   return (
-    <div className="p-6 md:p-12 min-h-screen text-white/90 pb-24 space-y-12">
+    <div className="min-h-screen text-white/90 bg-[#070709]">
+
+      {/* ─── MOBILE LAYOUT ─── */}
+      <div className="lg:hidden">
+        <div className="max-w-[430px] mx-auto px-4 py-5 space-y-4">
+
+          <div className="flex justify-end">
+            <button onClick={() => window.location.href='/trading'}
+              className="text-xs font-bold bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-xl active:scale-95 transition-all">
+              Crypto →
+            </button>
+          </div>
+
+          {/* PnL Card */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+               <Briefcase className="w-4 h-4 text-gray-400" />
+               <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest">Total PnL</p>
+            </div>
+            <h2 className={`text-3xl font-black mb-1 ${totalPnL >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+              {totalPnL >= 0 ? '+' : '-'}${Math.abs(totalPnL).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </h2>
+            <p className="text-xs text-gray-500 font-bold">{totalPnL >= 0 ? '+' : ''}{pnlPercentage}% Returns</p>
+          </div>
+
+          {/* Stock Selector */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <select value={selectedStock.symbol} onChange={(e) => setSelectedStock(mockStocks.find(s => s.symbol === e.target.value) || mockStocks[0])}
+                className="bg-transparent text-white text-lg font-black outline-none appearance-none cursor-pointer">
+                {mockStocks.map(s => <option key={s.symbol} value={s.symbol}>{s.symbol} - {s.name}</option>)}
+              </select>
+              <span className={`px-2 py-1 ${selectedStock.isPos ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} font-black text-xs rounded-lg`}>
+                {selectedStock.change}
+              </span>
+            </div>
+            <p className="text-3xl font-black text-white">${selectedStock.price.toFixed(2)}</p>
+          </div>
+
+          {/* Chart */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
+            <div className="h-[140px]">
+              <ResponsiveContainer width="100%" height="100%">
+                 <LineChart data={selectedStock.data}>
+                    <YAxis domain={['dataMin', 'dataMax']} hide />
+                    <Line type="monotone" dataKey="value" stroke={selectedStock.isPos ? '#22C55E' : '#EF4444'} strokeWidth={3} dot={false} isAnimationActive={false} />
+                 </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Order Form */}
+          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
+            <div className="flex bg-black p-1 rounded-xl mb-4 border border-white/5">
+              <button type="button" onClick={() => setOrderType('buy')}
+                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${orderType === 'buy' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'text-gray-500'}`}>Buy</button>
+              <button type="button" onClick={() => setOrderType('sell')}
+                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${orderType === 'sell' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'text-gray-500'}`}>Sell</button>
+            </div>
+            <form onSubmit={executeTrade} className="space-y-3">
+              <div className="relative">
+                <input type="number" step="1" min="1" required value={tradeShares} onChange={(e) => setTradeShares(e.target.value)} placeholder="0"
+                  className="w-full bg-black border border-white/10 focus:border-white/30 rounded-xl py-3 pl-4 pr-16 text-xl font-black text-white outline-none" />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">Shares</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 font-bold">Total</span>
+                <span className={`font-black ${orderType === 'buy' ? 'text-white' : 'text-green-400'}`}>${currentTotal}</span>
+              </div>
+              {orderType === 'buy' && Number(currentTotal) > balance && (
+                <div className="text-red-400 text-xs font-bold bg-red-500/10 p-2 rounded-xl text-center border border-red-500/20">
+                  Insufficient funds
+                </div>
+              )}
+              <div className="flex justify-between text-xs bg-white/5 p-3 rounded-xl">
+                <span className="text-gray-500 font-bold">Buying Power</span>
+                <span className="text-white font-black">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <button type="submit" disabled={orderType === 'buy' && Number(currentTotal) > balance}
+                className={`w-full py-4 rounded-2xl text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 ${orderType === 'buy' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>
+                {orderType === 'buy' ? `Buy ${selectedStock.symbol}` : `Sell ${selectedStock.symbol}`}
+              </button>
+            </form>
+          </div>
+
+          {/* Portfolio */}
+          <div>
+             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 mt-2">Your Portfolio</h3>
+             <div className="bg-[#0f0f13] border border-white/8 rounded-2xl overflow-hidden">
+               {enrichedPortfolio.length === 0 ? (
+                 <div className="py-8 text-center text-gray-500 text-sm">No stock positions.</div>
+               ) : (
+                 enrichedPortfolio.map((pos, idx) => {
+                    const rawPnL = (pos.currentPrice - pos.avgPrice) * pos.shares;
+                    return (
+                       <div key={idx} className={`flex items-center justify-between px-4 py-4 ${idx < enrichedPortfolio.length - 1 ? 'border-b border-white/5' : ''} cursor-pointer hover:bg-white/5`} onClick={() => setSelectedStock(mockStocks.find(s => s.symbol === pos.symbol) || mockStocks[0])}>
+                          <div>
+                             <p className="text-sm font-bold text-white">{pos.symbol}</p>
+                             <p className="text-xs text-gray-500 mt-0.5">{pos.shares} Shares</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-sm font-black text-white">${(pos.currentPrice * pos.shares).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                             <p className={`text-xs font-bold ${rawPnL >= 0 ? 'text-green-400' : 'text-red-400'} mt-0.5`}>
+                               {rawPnL >= 0 ? '+' : '-'}${Math.abs(rawPnL).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                             </p>
+                          </div>
+                       </div>
+                    )
+                 })
+               )}
+             </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ─── DESKTOP LAYOUT (unchanged) ─── */}
+      <div className="hidden lg:block p-6 md:p-12 min-h-screen pb-24 space-y-8 md:space-y-12 relative overflow-hidden">
       
       {/* Massive Header Section */}
-      <div className="relative mb-12">
+      <div className="relative mb-6 md:mb-12">
         <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[150px] pointer-events-none"></div>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end relative z-10 gap-8">
+        <div className="flex flex-col gap-4 relative z-10">
            <div>
-              <h1 className="text-6xl md:text-[5rem] font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl mb-4">
+              <h1 className="text-3xl sm:text-5xl md:text-[5rem] font-black tracking-tighter bg-gradient-to-br from-white via-white to-gray-500 bg-clip-text text-transparent drop-shadow-2xl mb-2">
                 Invest.
               </h1>
-              <p className="text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
+              <p className="text-base sm:text-xl md:text-2xl text-gray-400 font-medium tracking-wide">
                 Build and track your long-term equity portfolio.
               </p>
            </div>
            
            <div className="flex gap-4">
-             <div className="bg-[#050505] border border-white/10 rounded-3xl p-6 shadow-2xl flex items-center gap-6 group hover:border-purple-500/30 transition-colors">
-               <div className={`w-14 h-14 ${totalPnL >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'} rounded-2xl flex items-center justify-center border ${totalPnL >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}>
-                 {totalPnL >= 0 ? <TrendingUp className="w-8 h-8 text-green-400" /> : <TrendingDown className="w-8 h-8 text-red-500" />}
+             <div className="bg-[#050505] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-2xl flex items-center gap-4 sm:gap-6 group hover:border-purple-500/30 transition-colors w-full sm:w-fit">
+               <div className={`w-10 h-10 sm:w-14 sm:h-14 ${totalPnL >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'} rounded-xl sm:rounded-2xl flex items-center justify-center border ${totalPnL >= 0 ? 'border-green-500/30' : 'border-red-500/30'} shrink-0`}>
+                 {totalPnL >= 0 ? <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 text-green-400" /> : <TrendingDown className="w-5 h-5 sm:w-8 sm:h-8 text-red-500" />}
                </div>
                <div>
-                  <p className="text-gray-400 font-bold uppercase tracking-widest text-sm mb-1">Total PnL</p>
-                  <h2 className={`text-3xl font-black ${totalPnL >= 0 ? 'text-green-400' : 'text-red-500'}`}>
-                    {totalPnL >= 0 ? '+' : '-'}${Math.abs(totalPnL).toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xl text-gray-500">({totalPnL >= 0 ? '+' : ''}{pnlPercentage}%)</span>
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs sm:text-sm mb-0.5">Total PnL</p>
+                  <h2 className={`text-lg sm:text-3xl font-black ${totalPnL >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+                    {totalPnL >= 0 ? '+' : '-'}${Math.abs(totalPnL).toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-sm sm:text-xl text-gray-500">({totalPnL >= 0 ? '+' : ''}{pnlPercentage}%)</span>
                   </h2>
                </div>
              </div>
@@ -153,7 +271,7 @@ const Invest = () => {
            <div>
              <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-black">Featured Equities</h2>
-                <button className="text-purple-400 hover:text-purple-300 font-bold tracking-widest uppercase text-sm flex items-center gap-2">View All Markets <Play className="w-4 h-4" /></button>
+                <button onClick={() => window.location.href='/trading'} className="text-purple-400 hover:text-purple-300 font-bold tracking-widest uppercase text-sm flex items-center gap-2 cursor-pointer">View Crypto Markets <Play className="w-4 h-4" /></button>
              </div>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -202,7 +320,7 @@ const Invest = () => {
                 <span className="text-xl font-black text-white bg-white/10 px-4 py-2 rounded-xl">${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="overflow-x-auto w-full">
-                 <table className="w-full text-left">
+                 <table className="w-full text-left min-w-[500px]">
                     <thead>
                       <tr className="border-b border-white/10 text-base font-bold text-gray-500 uppercase tracking-widest">
                          <th className="pb-6">Asset</th>
@@ -220,7 +338,7 @@ const Invest = () => {
                            const pnlClass = rawPnL >= 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10';
                            
                            return (
-                             <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
+                             <tr key={idx} className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors group" onClick={() => setSelectedStock(mockStocks.find(s => s.symbol === pos.symbol) || mockStocks[0])}>
                                <td className="py-6 font-bold text-white group-hover:text-purple-400 transition-colors">{pos.symbol}</td>
                                <td className="py-6 text-gray-400 leading-none">{pos.shares}<span className="text-sm block text-gray-600 mt-1">Shares</span></td>
                                <td className="py-6 text-gray-400 text-right leading-none">${pos.avgPrice.toFixed(2)}</td>
@@ -327,13 +445,14 @@ const Invest = () => {
         </div>
 
       </div>
+      </div>
 
       {/* Massive Transaction Overlays */}
       {txStatus !== 'idle' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
           
-          <div className={`relative bg-[#0A0912] border border-white/10 w-full max-w-2xl rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden transition-all duration-500 transform ${txStatus === 'success' ? 'scale-105 border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.3)]' : txStatus === 'error' ? 'scale-[0.98] border-red-500/50 shadow-[0_0_100px_rgba(239,68,68,0.3)]' : 'scale-100'}`}>
+          <div className={`relative bg-[#0A0912] border border-white/10 w-full max-w-2xl mx-4 rounded-[2rem] sm:rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden transition-all duration-500 transform ${txStatus === 'success' ? 'scale-105 border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.3)]' : txStatus === 'error' ? 'scale-[0.98] border-red-500/50 shadow-[0_0_100px_rgba(239,68,68,0.3)]' : 'scale-100'}`}>
             
             {txStatus !== 'loading' && (
                <button type="button" onClick={() => setTxStatus('idle')} className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors z-30 cursor-pointer">
@@ -342,36 +461,36 @@ const Invest = () => {
             )}
 
             {txStatus === 'loading' && (
-              <div className="p-24 flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <div className="p-12 sm:p-20 flex flex-col items-center justify-center text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-purple-500/10 animate-pulse pointer-events-none"></div>
-                <div className="w-24 h-24 border-8 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-8 relative z-10"></div>
-                <h3 className="text-4xl font-black text-white">Filling Market Order</h3>
-                <p className="text-xl text-gray-400 mt-4 font-medium">Validating block and modifying ledger...</p>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 border-8 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-6 relative z-10"></div>
+                <h3 className="text-2xl sm:text-4xl font-black text-white">Filling Market Order</h3>
+                <p className="text-base text-gray-400 mt-3 font-medium">Validating block and modifying ledger...</p>
               </div>
             )}
 
             {txStatus === 'success' && (
-              <div className="p-24 flex flex-col items-center justify-center text-center relative">
+              <div className="p-10 sm:p-16 flex flex-col items-center justify-center text-center relative">
                 <div className="absolute inset-0 bg-green-500/10 pointer-events-none"></div>
-                <div className="w-32 h-32 bg-green-500/20 rounded-full flex items-center justify-center mb-8 border-4 border-green-500/30 relative z-10">
-                  <CheckCircle className="w-20 h-20 text-green-400" />
+                <div className="w-20 h-20 sm:w-28 sm:h-28 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-green-500/30 relative z-10">
+                  <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-400" />
                 </div>
-                <h3 className="text-5xl font-black text-white mb-4 relative z-10">Trade Executed</h3>
-                <p className="text-2xl text-green-400 font-bold max-w-md mb-8 relative z-10">{txMessage}</p>
-                <p className="text-xl text-gray-400 font-medium relative z-10">Your new wallet balance: <span className="text-white font-bold">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></p>
-                <button type="button" onClick={() => setTxStatus('idle')} className="mt-10 px-10 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-xl transition-all relative z-10 cursor-pointer">Close Terminal</button>
+                <h3 className="text-2xl sm:text-4xl font-black text-white mb-3 relative z-10">Trade Executed</h3>
+                <p className="text-base sm:text-xl text-green-400 font-bold max-w-sm mb-5 relative z-10">{txMessage}</p>
+                <p className="text-sm text-gray-400 font-medium relative z-10">New balance: <span className="text-white font-bold">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></p>
+                <button type="button" onClick={() => setTxStatus('idle')} className="mt-8 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-lg transition-all relative z-10 cursor-pointer">Close Terminal</button>
               </div>
             )}
 
             {txStatus === 'error' && (
-              <div className="p-24 flex flex-col items-center justify-center text-center relative">
+              <div className="p-10 sm:p-16 flex flex-col items-center justify-center text-center relative">
                 <div className="absolute inset-0 bg-red-500/10 pointer-events-none"></div>
-                <div className="w-32 h-32 bg-red-500/20 rounded-full flex items-center justify-center mb-8 border-4 border-red-500/30 relative z-10">
-                  <AlertOctagon className="w-20 h-20 text-red-500" />
+                <div className="w-20 h-20 sm:w-28 sm:h-28 bg-red-500/20 rounded-full flex items-center justify-center mb-6 border-4 border-red-500/30 relative z-10">
+                  <AlertOctagon className="w-12 h-12 sm:w-16 sm:h-16 text-red-500" />
                 </div>
-                <h3 className="text-5xl font-black text-white mb-4 relative z-10">Execution Failed</h3>
-                <p className="text-2xl text-red-400 font-bold max-w-md relative z-10">{txMessage}</p>
-                <button type="button" onClick={() => setTxStatus('idle')} className="mt-12 px-10 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-xl transition-all relative z-10 cursor-pointer">Dismiss</button>
+                <h3 className="text-2xl sm:text-4xl font-black text-white mb-3 relative z-10">Execution Failed</h3>
+                <p className="text-base sm:text-xl text-red-400 font-bold max-w-sm relative z-10">{txMessage}</p>
+                <button type="button" onClick={() => setTxStatus('idle')} className="mt-8 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl text-white font-bold text-lg transition-all relative z-10 cursor-pointer">Dismiss</button>
               </div>
             )}
 
