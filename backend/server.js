@@ -13,17 +13,8 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow local development and the specific production frontend
-    const allowedOrigins = [
-      'http://localhost:5173', 
-      'http://172.20.10.2:5173',
-      process.env.FRONTEND_URL
-    ];
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // Temporarily allowing all origins during production rollout
+    callback(null, true);
   },
   credentials: true
 }));
