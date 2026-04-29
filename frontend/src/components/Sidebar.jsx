@@ -24,12 +24,16 @@ const Sidebar = () => {
     <div className="hidden lg:flex w-[260px] bg-[#111116] border-r border-[#1a1b22] h-screen sticky top-0 flex-col py-10 z-50 shadow-2xl shrink-0">
       <NavLink
         to="/"
-        className="flex items-center gap-3 mb-10 px-8 hover:opacity-80 transition-opacity cursor-pointer"
+        className="flex flex-col gap-0.5 mb-10 px-8 hover:opacity-80 transition-opacity cursor-pointer group"
+        style={{ textDecoration: 'none' }}
       >
-        <svg className="w-7 h-7 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
-        <span className="font-extrabold text-xl tracking-tight text-white">FinEdge</span>
+        <div className="flex items-center gap-2">
+            <svg className="w-7 h-7 text-slate-400 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <span className="font-black text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-600">FinEdge</span>
+        </div>
+        <span className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-500 pl-9 -mt-0.5 group-hover:text-slate-400 transition-colors">Go Cashless Go FinEdge</span>
       </NavLink>
 
       <nav className="flex flex-col gap-2 px-4 flex-1">

@@ -4,9 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinEdge - Premium FinTech Platform</title>
+    <style>
+      /* Hide the original Google Translate Widget */
+      #google_translate_element { display: none !important; }
+      .goog-te-banner-frame { display: none !important; }
+      body { top: 0px !important; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Google Translate Widget (Hidden) -->
+    <div id="google_translate_element"></div>
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          autoDisplay: false
+        }, 'google_translate_element');
+      }
+
+      window.changeLanguageByButtonClick = function(lang) {
+        var selectField = document.querySelector("#google_translate_element select");
+        if (selectField) {
+          selectField.value = lang;
+          selectField.dispatchEvent(new Event('change'));
+        }
+      }
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { encryptData, decryptData } from '../utils/encryption.js';
+
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -33,6 +35,8 @@ const userSchema = new mongoose.Schema({
   // 2FA Fields
   twoFactorSecret: {
     type: String,
+    set: encryptData,
+    get: decryptData,
   },
   isTwoFactorEnabled: {
     type: Boolean,

@@ -5,25 +5,26 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import systemRoutes from './routes/systemRoutes.js';
+import { monitorMiddleware } from './utils/monitorEngine.js';
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: function (origin, callback) {
-    // Temporarily allowing all origins during production rollout
-    callback(null, true);
-  },
-  credentials: true
-}));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+// Apply Real-Time Monitoring Middleware globally
+app.use(monitorMiddleware);
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/system', systemRoutes);
+
 app.get('/', (req, res) => {
   res.send('Backend is running 🚀');
 });
@@ -40,6 +41,6 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected ✅'))
   .catch((err) => console.error('MongoDB connection error ❌', err));
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT} 🚀 (Bound to 0.0.0.0)`);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT} 🚀 (Bound to localhost)`);
 });

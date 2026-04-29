@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`http://localhost:5000/api/auth/login`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
@@ -49,11 +49,14 @@ const Login = () => {
       {/* ─── MOBILE LAYOUT ─── */}
       <div className="lg:hidden relative z-50 w-full min-h-screen bg-[#121318] flex flex-col items-center justify-center px-4 py-8">
          <div className="max-w-[430px] mx-auto w-full">
-            <Link to="/" className="flex items-center justify-center gap-3 cursor-pointer mb-10 animate-[fadeInUp_0.8s_ease-out_forwards]">
-               <svg className="w-9 h-9 text-[#cca3ff]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-               </svg>
-               <span className="font-extrabold text-4xl tracking-tight text-white">FinEdge</span>
+            <Link to="/" style={{ textDecoration: 'none' }} className="flex flex-col items-center gap-0.5 cursor-pointer mb-10 animate-[fadeInUp_0.8s_ease-out_forwards] group">
+               <div className="flex items-center gap-2">
+                   <svg className="w-9 h-9 text-slate-400 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                   </svg>
+                   <span className="font-extrabold text-4xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-600">FinEdge</span>
+               </div>
+               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 pl-11 group-hover:text-slate-400 transition-colors">Go Cashless Go FinEdge</span>
             </Link>
 
             <div className="w-full bg-[#1a1b22] border border-white/5 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl animate-[fadeInUp_1s_ease-out_forwards]">
@@ -115,13 +118,14 @@ const Login = () => {
          
          {/* Left Side: Massive Typography */}
          <div className="hidden md:flex w-full md:w-[600px] flex-col justify-center animate-[fadeInUp_0.8s_ease-out_forwards]">
-            <Link to="/" className="flex items-center gap-3 cursor-pointer mb-10 w-fit">
-               <svg className="w-9 h-9 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-               </svg>
-               <span className="font-extrabold text-4xl tracking-tight text-white">
-                 FinEdge
-               </span>
+            <Link to="/" style={{ textDecoration: 'none' }} className="flex flex-col items-start gap-0 cursor-pointer mb-10 w-fit group hover:opacity-100">
+               <div className="flex items-center gap-2">
+                   <svg className="w-9 h-9 text-slate-400 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                   </svg>
+                   <span className="font-extrabold text-4xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-600">FinEdge</span>
+               </div>
+               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 pl-11 group-hover:text-slate-400 transition-colors">Go Cashless Go FinEdge</span>
             </Link>
 
             <h1 className="text-[5rem] md:text-[6.5rem] xl:text-[7.5rem] font-bold tracking-tighter leading-[0.95] text-white">

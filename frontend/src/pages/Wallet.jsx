@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownLeft, Plus, RefreshCw, Bitcoin, CreditCard, DollarSign, Wallet as WalletIcon, ArrowRight, Activity, Percent, X, CheckCircle, AlertOctagon } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Plus, RefreshCw, Bitcoin, CreditCard, DollarSign, Wallet as WalletIcon, ArrowRight, Activity, Percent, X, CheckCircle, AlertOctagon, Wifi } from 'lucide-react';
 import { API_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,6 +10,8 @@ const Wallet = () => {
   const [txMessage, setTxMessage] = useState('');
   const [amount, setAmount] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
+  const [isCardExpanded, setIsCardExpanded] = useState(false);
+  const [activeCard, setActiveCard] = useState(1);
 
   const navigate = useNavigate();
   const token = localStorage.getItem('finedgeToken');
@@ -70,6 +72,32 @@ const Wallet = () => {
     setAmount('');
     setTargetEmail('');
     fetchBalance();
+  };
+
+  const handleCardClick = (e, cardId) => {
+    e.stopPropagation();
+    if (!isCardExpanded) {
+      setIsCardExpanded(true);
+    } else {
+      if (activeCard === cardId) {
+        setIsCardExpanded(false);
+      } else {
+        setActiveCard(cardId);
+      }
+    }
+  };
+
+  const getCardPositionClasses = (cardId) => {
+    let relativePos = (cardId - activeCard + 3) % 3; 
+    if (!isCardExpanded) {
+      if (relativePos === 0) return 'translate-x-0 translate-y-0 rotate-0 scale-100 z-30';
+      if (relativePos === 1) return 'translate-x-0 translate-y-0 rotate-0 scale-100 z-20 opacity-0';
+      if (relativePos === 2) return 'translate-x-0 translate-y-0 rotate-0 scale-100 z-10 opacity-0';
+    } else {
+      if (relativePos === 0) return 'translate-y-48 -translate-x-6 -rotate-3 scale-100 z-30 hover:scale-[1.02] opacity-100';
+      if (relativePos === 1) return 'translate-y-0 translate-x-12 rotate-6 scale-95 z-20 hover:scale-100 opacity-100';
+      if (relativePos === 2) return '-translate-y-44 -translate-x-10 -rotate-6 scale-90 z-10 hover:scale-95 opacity-100';
+    }
   };
 
   const assets = [
@@ -162,95 +190,154 @@ const Wallet = () => {
   return (
     <div className="min-h-screen text-white/90 bg-[#070709]">
 
-      <SharedModal />
+      {SharedModal()}
 
       {/* ─── MOBILE LAYOUT ─── */}
-      <div className="lg:hidden">
-        <div className="max-w-[430px] mx-auto px-4 py-5 space-y-4">
+      <div className="lg:hidden min-h-screen bg-[#121318] pt-14 pb-32 px-4 flex flex-col gap-6 relative overflow-hidden">
+        {/* Abstract Background Glows */}
+        <div className="absolute top-[-5%] right-[-10%] w-full h-[400px] bg-purple-600/10 blur-[120px] rounded-full -z-10 animate-pulse"></div>
+        <div className="absolute bottom-[20%] left-[-20%] w-[120%] h-[300px] bg-blue-600/10 blur-[100px] rounded-full -z-10"></div>
 
-          {/* Header actions (Deposit) moved to TopBar or refined here */}
-          <div className="flex justify-end">
-            <button onClick={() => setModalState({ isOpen: true, type: 'deposit' })}
-              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm active:scale-95 transition-all shadow-[0_4px_15px_rgba(168,85,247,0.4)]">
-              <Plus className="w-4 h-4" /> Deposit
-            </button>
-          </div>
-
-          {/* Balance Card */}
-          <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-3xl p-6 shadow-[0_8px_32px_rgba(168,85,247,0.35)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <WalletIcon className="w-4 h-4 text-purple-200" />
-                <p className="text-purple-200 text-xs font-semibold uppercase tracking-widest">Available Balance</p>
-              </div>
-              <h2 className="text-4xl font-black text-white tracking-tight mb-5">
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </h2>
-              <div className="flex gap-3">
-                <button onClick={() => setModalState({ isOpen: true, type: 'send' })}
-                  className="flex-1 bg-white/20 text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                  <ArrowUpRight className="w-4 h-4" /> Send
-                </button>
-                <button onClick={() => setModalState({ isOpen: true, type: 'receive' })}
-                  className="flex-1 bg-white text-purple-700 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                  <ArrowDownLeft className="w-4 h-4" /> Receive
-                </button>
-              </div>
+        {/* Top Header & Deposit Action */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-[#1a1b22] border border-white/5 rounded-2xl flex items-center justify-center">
+              <WalletIcon className="w-6 h-6 text-[#cca3ff]" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Financial</p>
+              <h2 className="text-xl font-black text-white leading-tight">Assets</h2>
             </div>
           </div>
+          <button 
+            onClick={() => setModalState({ isOpen: true, type: 'deposit' })}
+            className="w-11 h-11 bg-[#cca3ff] border border-[#cca3ff]/20 rounded-2xl flex items-center justify-center text-[#121318] shadow-[0_5px_15px_rgba(204,163,255,0.4)] transition-transform active:scale-95"
+          >
+            <Plus className="w-5 h-5 font-black" />
+          </button>
+        </div>
 
-          {/* Assets */}
-          <div>
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Your Assets</h3>
-            <div className="bg-[#0f0f13] border border-white/8 rounded-2xl overflow-hidden">
-              {assets.map((asset, idx) => (
-                <div key={asset.id} className={`flex items-center justify-between px-4 py-4 ${idx < assets.length - 1 ? 'border-b border-white/5' : ''}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-black border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-                      <div className="scale-[0.58]">{asset.icon}</div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">{asset.name}</p>
-                      <p className="text-xs text-gray-500">{asset.balance} {asset.symbol}</p>
-                    </div>
+        {/* Wealth Score Insight (Information Density) */}
+        <div className="bg-gradient-to-br from-[#1a1b22] to-[#0d0d12] border border-white/5 rounded-[2.5rem] p-6 relative overflow-hidden shadow-xl">
+           <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Wealth Health</h3>
+              <div className="px-2 py-1 bg-green-500/10 rounded-lg text-green-400 text-[10px] font-black uppercase">Excellent</div>
+           </div>
+           <div className="flex items-center gap-6">
+              <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
+                 <svg className="w-full h-full transform -rotate-90">
+                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/5" />
+                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - 0.84)} className="text-[#cca3ff] transition-all duration-1000" strokeLinecap="round" />
+                 </svg>
+                 <span className="absolute text-xl font-black text-white">840</span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                 <p className="text-[11px] text-gray-400 font-medium leading-tight">Your financial stability is in the <span className="text-white font-bold">top 5%</span> of users this month.</p>
+                 <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-gray-500">
+                    <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+                    Verified by FinEdge
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        {/* Premium 3D Mobile VISA Card */}
+        <div className="relative w-full h-64 my-4" style={{ perspective: '1000px' }} onClick={() => setIsCardExpanded(!isCardExpanded)}>
+           <div className={`w-full h-full bg-gradient-to-tr from-[#14151B] via-[#292A38] to-[#121217] border border-white/20 rounded-[2rem] p-6 flex flex-col justify-between transition-transform duration-700 shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden ${isCardExpanded ? 'scale-105' : ''}`} 
+                style={{ transform: isCardExpanded ? 'rotateY(10deg) rotateX(5deg)' : 'rotateY(0deg)', transformStyle: 'preserve-3d' }}>
+              
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,255,255,0.15),_transparent_50%)] pointer-events-none"></div>
+              <div className="absolute right-[-10%] bottom-[-20%] w-64 h-64 bg-purple-500/20 blur-[60px] rounded-full pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.05] mix-blend-overlay"></div>
+              
+              <div className="flex justify-between items-start z-10 w-full relative" style={{ transform: 'translateZ(30px)' }}>
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-10 rounded-md border border-[#8B6508] bg-gradient-to-br from-[#E6C27A] via-[#D4AF37] to-[#AA7C11] flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
+                       <div className="w-full h-px bg-[#8B6508]/50 absolute top-1/3"></div>
+                       <div className="w-full h-px bg-[#8B6508]/50 absolute top-2/3"></div>
+                       <div className="w-px h-full bg-[#8B6508]/50 absolute left-1/2"></div>
+                   </div>
+                   <Wifi className="w-6 h-6 text-gray-400 rotate-90 opacity-80" strokeWidth={2.5} />
+                </div>
+                <span className="text-3xl font-black italic tracking-widest text-transparent bg-clip-text bg-gradient-to-br from-purple-300 to-purple-600 drop-shadow-lg">VISA</span>
+              </div>
+              
+              <div className="z-10 relative mt-auto" style={{ transform: 'translateZ(40px)' }}>
+                <p className="text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 tracking-[0.2em] font-mono text-3xl mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">•••• •••• •••• 4289</p>
+                <div className="flex justify-between items-end">
+                  <div>
+                     <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-1 drop-shadow-md">Cardholder</p>
+                     <p className="text-white font-black text-sm uppercase tracking-[0.2em] drop-shadow-md">ALEXANDER WANG</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-black text-white">{asset.value}</p>
-                    <span className="text-xs font-bold text-green-400">{asset.change}</span>
+                  <div className="text-right flex flex-col items-end">
+                     <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-1 drop-shadow-md">Valid Thru</p>
+                     <p className="text-white font-black text-sm tracking-[0.1em] drop-shadow-md">12/28</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+           </div>
+        </div>
 
-          {/* Quick Actions */}
-          <div>
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4 flex flex-col gap-3 cursor-pointer hover:border-purple-500/30 transition-all active:scale-95">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                  <Percent className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-white">Stake & Earn</p>
-                  <p className="text-xs text-gray-500">Up to 12% APY</p>
-                </div>
+        {/* Action Buttons */}
+        <div className="flex gap-3 mb-2">
+           <button onClick={() => setModalState({ isOpen: true, type: 'send' })}
+             className="flex-1 bg-white border border-white/10 text-black py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)] hover:bg-gray-200">
+             <ArrowUpRight className="w-5 h-5 text-black" /> Send
+           </button>
+           <button onClick={() => setModalState({ isOpen: true, type: 'receive' })}
+             className="flex-1 bg-gradient-to-r from-purple-600 to-purple-800 border border-purple-500/50 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-[0_10px_30px_rgba(168,85,247,0.3)] hover:brightness-110">
+             <ArrowDownLeft className="w-5 h-5 text-white" /> Receive
+           </button>
+        </div>
+
+        {/* Savings Goal Card (Density enhancement) */}
+        <div className="bg-[#1a1b22] border border-white/5 rounded-[2.5rem] p-6">
+           <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-blue-400" />
+                 </div>
+                 <h3 className="text-sm font-black text-white">Savings Goal</h3>
               </div>
-              <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4 flex flex-col gap-3 cursor-pointer hover:border-blue-500/30 transition-all active:scale-95">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-white">Analytics</p>
-                  <p className="text-xs text-gray-500">Full reports</p>
-                </div>
-              </div>
-            </div>
+              <span className="text-xs font-black text-[#cca3ff]">$10.0M</span>
+           </div>
+           <div className="w-full bg-white/5 h-3 rounded-full overflow-hidden mb-3">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-full w-[12%] rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+           </div>
+           <div className="flex justify-between items-center">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</span>
+              <span className="text-[10px] text-white font-black">12.45% Complete</span>
+           </div>
+        </div>
+
+        {/* Assets Section */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Your Portfolio</h3>
+            <button className="text-[10px] text-[#cca3ff] font-black uppercase tracking-widest">Manage</button>
           </div>
+          <div className="bg-[#1a1b22] border border-white/5 rounded-[2.5rem] overflow-hidden p-2">
+            {assets.map((asset, idx) => (
+              <div key={asset.id} className={`flex items-center justify-between px-4 py-4 ${idx < assets.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#121318] border border-white/5 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+                    <div className="scale-[0.7]">{asset.icon}</div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-white leading-tight">{asset.name}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter mt-1">{asset.balance} {asset.symbol}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black text-white leading-tight">{asset.value}</p>
+                  <span className="text-[10px] font-black text-green-400 uppercase mt-1 inline-block">{asset.change}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         </div>
-      </div>
 
       {/* ─── DESKTOP LAYOUT (unchanged) ─── */}
       <div className="hidden lg:block p-10 min-h-screen pb-24 space-y-10 relative">
@@ -295,20 +382,90 @@ const Wallet = () => {
                 </button>
               </div>
             </div>
-            <div className="hidden xl:flex flex-col justify-end items-end relative">
-              <div className="w-[80%] h-[300px] bg-gradient-to-tr from-[#1A1A1F] via-[#2A2A35] to-[#1A1A1F] border border-white/20 rounded-[3rem] p-10 flex flex-col justify-between hover:scale-105 transition-all duration-700 cursor-pointer overflow-hidden group">
+            <div 
+              className="hidden xl:flex flex-col justify-center items-center relative perspective-1000 w-full h-[400px] animate-[float_6s_ease-in-out_infinite]"
+              onClick={() => { if(!isCardExpanded) setIsCardExpanded(true); else setIsCardExpanded(false); }}
+            >
+              
+              {/* Card 3: Back Angle */}
+              <div 
+                 onClick={(e) => handleCardClick(e, 3)}
+                 className={`absolute w-[360px] h-[225px] bg-gradient-to-br from-[#121217] via-[#1c1d24] to-[#0A0A0E] border border-white/10 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.9)] transition-all duration-700 transform flex flex-col justify-between overflow-hidden cursor-pointer ${getCardPositionClasses(3)}`}
+              >
+                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] mix-blend-overlay"></div>
+                 <div className="w-full h-12 bg-gradient-to-b from-black via-[#0a0a0a] to-black mt-6 shadow-[0_2px_10px_rgba(0,0,0,0.5)] border-y border-white/5 relative z-10"></div>
+                 <div className="mt-6 flex justify-between items-start w-full px-6 relative z-10">
+                    <div className="text-[7px] text-gray-400 uppercase tracking-[0.2em] max-w-[200px] leading-relaxed">
+                      This card is the property of FinEdge Bank NA. <br/>
+                      If found, return to: 1 FinEdge Plaza, NY 10001 <br/>
+                      <span className="text-white font-bold mt-1 block">Support: +1 (800) 555-0199</span>
+                    </div>
+                 </div>
+                 <div className="w-full bg-gradient-to-r from-gray-300 to-gray-100 h-10 rounded-sm mt-auto mb-6 mx-4 flex items-center justify-end px-4 relative max-w-[80%] self-center shadow-inner">
+                    <div className="absolute left-0 top-0 bottom-0 w-[85%] bg-gradient-to-r from-gray-400/20 to-transparent" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.05) 4px, rgba(0,0,0,0.05) 8px)' }}></div>
+                    <span className="font-mono text-sm font-black text-black italic relative z-10 tracking-widest drop-shadow-sm">821</span>
+                 </div>
+              </div>
+
+              {/* Card 2: Side Angle */}
+              <div 
+                 onClick={(e) => handleCardClick(e, 2)}
+                 className={`absolute w-[360px] h-[225px] bg-gradient-to-tl from-[#1A1A24] via-[#2D2E3A] to-[#121217] border border-purple-500/30 rounded-[2rem] p-8 shadow-[0_40px_80px_rgba(0,0,0,0.95)] transition-all duration-700 transform flex flex-col justify-between overflow-hidden cursor-pointer ${getCardPositionClasses(2)}`}
+              >
+                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-purple-500/10 pointer-events-none"></div>
+                 <div className="absolute right-0 bottom-0 w-48 h-48 bg-purple-500/20 blur-[60px] rounded-full pointer-events-none"></div>
+                 
+                 <div className="flex justify-between items-center w-full relative z-10">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-10 rounded-md border border-[#8B6508] bg-gradient-to-br from-[#E6C27A] via-[#D4AF37] to-[#AA7C11] flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
+                           <div className="w-full h-px bg-[#8B6508]/50 absolute top-1/3"></div>
+                           <div className="w-full h-px bg-[#8B6508]/50 absolute top-2/3"></div>
+                           <div className="w-px h-full bg-[#8B6508]/50 absolute left-1/2"></div>
+                       </div>
+                       <Wifi className="w-6 h-6 text-gray-400 rotate-90 opacity-80" strokeWidth={2.5} />
+                    </div>
+                    <span className="text-2xl font-black italic tracking-widest text-transparent bg-clip-text bg-gradient-to-br from-purple-300 to-purple-600 drop-shadow-lg">VISA</span>
+                 </div>
+                 
+                 <div className="z-10 mt-auto relative">
+                    <p className="text-transparent bg-clip-text bg-gradient-to-b from-gray-200 to-gray-500 tracking-[0.25em] font-mono text-xl mb-2 text-right drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">4111 2222 3333 4289</p>
+                    <div className="flex justify-between items-end">
+                       <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.3em]">Valid Thru 12/28</p>
+                       <p className="text-gray-300 font-black text-sm uppercase tracking-[0.2em] text-right drop-shadow-md">ALEXANDER WANG</p>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Card 1: Front Angle */}
+              <div 
+                 onClick={(e) => handleCardClick(e, 1)}
+                 className={`absolute w-[380px] h-[240px] bg-gradient-to-tr from-[#14151B] via-[#292A38] to-[#121217] border border-white/20 rounded-[2rem] p-8 flex flex-col justify-between transition-all duration-700 transform shadow-[0_50px_100px_rgba(0,0,0,1)] overflow-hidden cursor-pointer ${getCardPositionClasses(1)}`}
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,255,255,0.15),_transparent_50%)] pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-overlay"></div>
+                
                 <div className="flex justify-between items-start z-10 w-full relative">
-                  <CreditCard className="w-12 h-12 text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]" />
-                  <span className="text-2xl font-black italic tracking-widest text-white/50">VISA</span>
+                  <div className="flex items-center gap-2">
+                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.5)]">
+                        <WalletIcon className="w-5 h-5 text-white" />
+                     </div>
+                     <span className="text-white font-black text-xl tracking-tighter drop-shadow-lg">FinEdge</span>
+                  </div>
+                  <span className="text-2xl font-black italic tracking-widest text-gray-500/50 mix-blend-overlay">VISA</span>
                 </div>
-                <div className="z-10 relative">
-                  <p className="text-white/80 tracking-[0.2em] font-mono text-2xl mb-3">•••• •••• •••• 4289</p>
-                  <div className="flex justify-between items-end">
-                    <p className="text-white font-black text-xl uppercase tracking-widest">FinEdge Premium</p>
-                    <p className="text-white/60 font-mono text-lg">12/28</p>
+                
+                <div className="z-10 relative mt-auto">
+                  <p className="text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 tracking-[0.2em] font-mono text-2xl mb-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">•••• •••• •••• 4289</p>
+                  <div className="flex justify-between items-end border-t border-white/10 pt-4 mt-2">
+                    <p className="text-white font-black text-lg uppercase tracking-[0.2em] drop-shadow-md">Premium Metal</p>
+                    <div className="flex items-center gap-1">
+                       <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
+                       <span className="text-gray-400 font-bold text-[9px] uppercase tracking-widest">Active</span>
+                    </div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </div>

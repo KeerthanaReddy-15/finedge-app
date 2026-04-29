@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, Wallet, Activity, ArrowRightLeft, Bell, ArrowDownLeft, Zap, ExternalLink, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, Activity, ArrowRightLeft, Bell, ArrowDownLeft, Zap, ExternalLink, ShieldCheck, ArrowRight, Bitcoin } from 'lucide-react';
 import { API_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 
@@ -66,140 +66,185 @@ const Dashboard = () => {
     <div className="min-h-screen text-white/90 bg-[#070709]">
 
       {/* ─── MOBILE LAYOUT ─── */}
-      <div className="lg:hidden">
-        <div className="max-w-[430px] mx-auto px-4 py-5 space-y-4">
+      <div className="lg:hidden min-h-screen bg-[#121318] pt-14 pb-32 px-4 flex flex-col gap-6 relative overflow-hidden">
+        {/* Abstract Background Glows */}
+        <div className="absolute top-[-10%] left-[-20%] w-full h-[500px] bg-purple-600/10 blur-[120px] rounded-full -z-10 animate-pulse"></div>
+        <div className="absolute bottom-[10%] right-[-20%] w-[120%] h-[400px] bg-blue-600/10 blur-[120px] rounded-full -z-10"></div>
 
-          {/* Notification indicator handled by TopBar */}
-
-          {/* Balance Card */}
-          <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-3xl p-6 shadow-[0_8px_32px_rgba(168,85,247,0.35)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/20 rounded-full -ml-10 -mb-10 blur-xl"></div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-3">
-                <Wallet className="w-4 h-4 text-purple-200" />
-                <p className="text-purple-200 text-xs font-semibold uppercase tracking-widest">Total Balance</p>
-              </div>
-              <h2 className="text-4xl font-black text-white tracking-tight mb-5">
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </h2>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => navigate('/wallet')}
-                  className="flex-1 bg-white/20 backdrop-blur-sm text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-white/30 transition-all active:scale-95"
-                >
-                  <ArrowUpRight className="w-4 h-4" /> Send
-                </button>
-                <button
-                  onClick={() => navigate('/wallet')}
-                  className="flex-1 bg-white text-purple-700 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-purple-50 transition-all active:scale-95"
-                >
-                  <ArrowDownLeft className="w-4 h-4" /> Receive
-                </button>
-              </div>
+        {/* Top Branding & Quick Actions */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-[#1a1b22] border border-white/5 rounded-2xl flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-[#cca3ff]" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Portfolio</p>
+              <h2 className="text-xl font-black text-white leading-tight">Overview</h2>
             </div>
           </div>
+          <button className="w-11 h-11 bg-[#1a1b22] border border-white/5 rounded-2xl flex items-center justify-center text-gray-400">
+            <Bell className="w-5 h-5" />
+          </button>
+        </div>
 
-          {/* Quick Actions */}
-          <div>
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Quick Actions</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'Send', icon: ArrowUpRight, color: 'text-purple-400', bg: 'bg-purple-500/10', path: '/wallet' },
-                { label: 'Receive', icon: ArrowDownLeft, color: 'text-blue-400', bg: 'bg-blue-500/10', path: '/wallet' },
-                { label: 'Trade', icon: Zap, color: 'text-green-400', bg: 'bg-green-500/10', path: '/trading' },
-              ].map(({ label, icon: Icon, color, bg, path }) => (
-                <button
-                  key={label}
-                  onClick={() => navigate(path)}
-                  className="bg-[#111116] border border-white/8 rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-all hover:border-white/20 shadow-sm"
-                >
-                  <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>
-                    <Icon className={`w-5 h-5 ${color}`} />
-                  </div>
-                  <span className="text-xs font-bold text-gray-300">{label}</span>
-                </button>
-              ))}
-            </div>
+        {/* Main Balance High-Impact Card */}
+        <div className="relative p-7 bg-gradient-to-br from-[#1a1b22] to-[#0f0f13] border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+             <Zap className="w-24 h-24 text-purple-500" />
           </div>
-
-          {/* Chart Card */}
-          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="text-sm font-black text-white">Income vs Expense</h3>
-                <div className="flex items-center gap-3 mt-1">
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div><span className="text-xs text-gray-500 font-medium">Income</span></div>
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500"></div><span className="text-xs text-gray-500 font-medium">Expense</span></div>
-                </div>
+          <div className="relative z-10">
+            <p className="text-gray-400 font-bold text-xs uppercase tracking-[0.2em] mb-1">Available Funds</p>
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-4xl xs:text-5xl font-black text-white tracking-tighter">${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <div className="flex items-center gap-1 text-green-400 font-black text-xs px-2 py-1 bg-green-400/10 rounded-lg">
+                <ArrowUpRight className="w-3 h-3" />
+                <span>+12.4%</span>
               </div>
             </div>
-            <div className="h-[160px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={incomeExpenseData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="mIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="mExpense" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false} axisLine={false} dy={8} />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#0f0f13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
-                    itemStyle={{ fontWeight: 700 }}
-                    labelStyle={{ color: '#9CA3AF', fontSize: '11px', marginBottom: '4px' }}
-                  />
-                  <Area type="monotone" dataKey="income" stroke="#22C55E" strokeWidth={2} fillOpacity={1} fill="url(#mIncome)" dot={false} />
-                  <Area type="monotone" dataKey="expense" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#mExpense)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Recent Transactions */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-black text-white">Recent Activity</h3>
-              <button onClick={() => navigate('/transactions')} className="text-purple-400 text-xs font-bold flex items-center gap-1">
-                See all <ExternalLink className="w-3 h-3" />
+            <div className="flex gap-2.5">
+              <button 
+                onClick={() => navigate('/wallet')}
+                className="flex-1 bg-[#cca3ff] text-[#121318] py-4 rounded-3xl font-black text-sm transition-transform active:scale-95 shadow-[0_10px_25px_-5px_rgba(204,163,255,0.4)]"
+              >
+                Buy
+              </button>
+              <button 
+                onClick={() => navigate('/trading')}
+                className="flex-1 bg-white/5 border border-white/10 text-white py-4 rounded-3xl font-black text-sm active:scale-95"
+              >
+                Trade
               </button>
             </div>
-            <div className="bg-[#0f0f13] border border-white/8 rounded-2xl overflow-hidden shadow-sm">
-              {recentTxns.length === 0 ? (
-                <div className="py-8 text-center text-gray-500 text-sm">No transactions yet.</div>
-              ) : (
-                recentTxns.map((tx, idx) => (
-                  <div key={idx} className={`flex items-center justify-between px-4 py-3.5 ${idx < recentTxns.length - 1 ? 'border-b border-white/5' : ''}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${tx.positive ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                        {tx.positive
-                          ? <ArrowDownLeft className="w-4 h-4 text-green-400" />
-                          : <ArrowUpRight className="w-4 h-4 text-red-400" />
-                        }
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white leading-tight truncate max-w-[150px]">{tx.name}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{tx.date}</p>
-                      </div>
+          </div>
+        </div>
+
+        {/* Market Pulse Section (Information Density) */}
+        <div className="flex flex-col gap-3">
+           <div className="flex justify-between items-center">
+             <h3 className="text-sm font-black text-white uppercase tracking-widest px-1">Market Pulse</h3>
+             <span className="text-[10px] text-green-400 font-bold animate-pulse">• Live</span>
+           </div>
+           <div className="grid grid-cols-2 gap-3">
+             <div className="bg-[#1a1b22] p-4 rounded-3xl border border-white/5">
+                <div className="flex items-center gap-2 mb-1">
+                   <div className="w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                      <span className="text-orange-500 text-[10px] font-bold">₿</span>
+                   </div>
+                   <span className="text-gray-400 font-bold text-[10px] uppercase">BTC / USD</span>
+                </div>
+                <p className="text-white font-black text-sm">$64,250.20</p>
+                <span className="text-[10px] text-green-400 font-black">+2.45%</span>
+             </div>
+             <div className="bg-[#1a1b22] p-4 rounded-3xl border border-white/5">
+                <div className="flex items-center gap-2 mb-1">
+                   <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                      <span className="text-blue-500 text-[10px] font-bold">Ξ</span>
+                   </div>
+                   <span className="text-gray-400 font-bold text-[10px] uppercase">ETH / USD</span>
+                </div>
+                <p className="text-white font-black text-sm">$3,120.45</p>
+                <span className="text-[10px] text-red-400 font-black">-1.12%</span>
+             </div>
+           </div>
+        </div>
+
+        {/* Performance Graph Card */}
+        <div className="bg-[#1a1b22]/50 border border-white/5 rounded-[2.5rem] p-6 backdrop-blur-sm">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-sm font-black text-white">Net Evolution</h3>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Last 30 Days</p>
+            </div>
+            <Activity className="w-5 h-5 text-purple-400 opacity-50" />
+          </div>
+          <div className="h-[140px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={incomeExpenseData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="mIncome" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="mExpense" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false} axisLine={false} dy={8} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f0f13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
+                  itemStyle={{ fontWeight: 700 }}
+                  labelStyle={{ color: '#9CA3AF', fontSize: '11px', marginBottom: '4px' }}
+                />
+                <Area type="monotone" dataKey="income" stroke="#22C55E" strokeWidth={2} fillOpacity={1} fill="url(#mIncome)" dot={false} />
+                <Area type="monotone" dataKey="expense" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#mExpense)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Wealth Evolution Insight Card */}
+        <div className="bg-gradient-to-r from-purple-500/10 via-[#1a1b22] to-blue-500/10 border border-white/5 rounded-[2.5rem] p-6 relative overflow-hidden group">
+           <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/20 blur-[60px] rounded-full"></div>
+           <div className="flex items-center gap-4 relative z-10">
+              <div className="w-14 h-14 bg-[#121318] border border-purple-500/20 rounded-2xl flex items-center justify-center shadow-lg">
+                 <ShieldCheck className="w-7 h-7 text-[#cca3ff]" />
+              </div>
+              <div>
+                 <h4 className="text-sm font-black text-white">Wealth Insight</h4>
+                 <p className="text-[11px] text-gray-400 leading-tight mt-0.5">Your wealth is projected to grow by <span className="text-green-400 font-bold">18.5%</span> next month.</p>
+              </div>
+           </div>
+           <div className="mt-5 pt-5 border-t border-white/5 flex justify-between items-center relative z-10">
+              <div className="flex flex-col">
+                 <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Recommended Actions</span>
+                 <span className="text-[11px] text-white font-bold">Increase AAPL holding</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#cca3ff]" />
+           </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="text-sm font-black text-white uppercase tracking-widest">Recent Activity</h3>
+            <button onClick={() => navigate('/transactions')} className="text-purple-400 text-xs font-bold flex items-center gap-1">
+              See all <ArrowRightLeft className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="bg-[#1a1b22] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-sm p-2">
+            {recentTxns.length === 0 ? (
+              <div className="py-10 text-center text-gray-500 text-sm font-bold tracking-wide flex flex-col items-center gap-2">
+                 <Activity className="w-8 h-8 text-white/5" />
+                 No transactions yet.
+              </div>
+            ) : (
+              recentTxns.map((tx, idx) => (
+                <div key={idx} className={`flex items-center justify-between px-4 py-4 ${idx < recentTxns.length - 1 ? 'border-b border-white/5' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${tx.positive ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                      {tx.positive
+                        ? <ArrowDownLeft className="w-5 h-5 text-green-400" />
+                        : <ArrowUpRight className="w-5 h-5 text-red-400" />
+                      }
                     </div>
-                    <div className="text-right">
-                      <p className={`text-sm font-black ${tx.positive ? 'text-green-400' : 'text-white'}`}>{tx.amount}</p>
-                      <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md ${tx.pending ? 'bg-orange-500/10 text-orange-400' : 'bg-green-500/10 text-green-400'}`}>
-                        {tx.status}
-                      </span>
+                    <div>
+                      <p className="text-sm font-black text-white leading-tight truncate max-w-[140px]">{tx.name}</p>
+                      <p className="text-[11px] text-gray-500 font-bold uppercase tracking-tighter mt-1">{tx.date}</p>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                  <div className="text-right">
+                    <p className={`text-sm font-black ${tx.positive ? 'text-green-400' : 'text-white'}`}>{tx.amount}</p>
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mt-1 inline-block ${tx.pending ? 'bg-orange-500/10 text-orange-400' : 'bg-white/5 text-gray-400'}`}>
+                      {tx.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-
         </div>
       </div>
 

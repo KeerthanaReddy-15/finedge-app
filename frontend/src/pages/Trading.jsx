@@ -4,23 +4,34 @@ import { TrendingUp, RefreshCw, BarChart2, DollarSign, CheckCircle, AlertOctagon
 import { API_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 
-const btcData = [
-  { time: '09:00', price: 62450 }, { time: '10:00', price: 62800 },
-  { time: '11:00', price: 63120 }, { time: '12:00', price: 62900 },
-  { time: '13:00', price: 63500 }, { time: '14:00', price: 64100 },
-  { time: '15:00', price: 63850 }, { time: '16:00', price: 64250 },
-  { time: '17:00', price: 65100 }, { time: '18:00', price: 66200 },
-  { time: '19:00', price: 65900 }, { time: '20:00', price: 66850 }
-];
-
-const ethData = [
-  { time: '09:00', price: 3100 }, { time: '10:00', price: 3150 },
-  { time: '11:00', price: 3120 }, { time: '12:00', price: 3080 },
-  { time: '13:00', price: 3200 }, { time: '14:00', price: 3250 },
-  { time: '15:00', price: 3220 }, { time: '16:00', price: 3350 },
-  { time: '17:00', price: 3410 }, { time: '18:00', price: 3480 },
-  { time: '19:00', price: 3450 }, { time: '20:00', price: 3520 }
-];
+const initialCryptoData = {
+  BTC: {
+    price: 66850.00,
+    change: '+5.21%',
+    isPos: true,
+    data: [
+      { time: '09:00', price: 62450 }, { time: '10:00', price: 62800 },
+      { time: '11:00', price: 63120 }, { time: '12:00', price: 62900 },
+      { time: '13:00', price: 63500 }, { time: '14:00', price: 64100 },
+      { time: '15:00', price: 63850 }, { time: '16:00', price: 64250 },
+      { time: '17:00', price: 65100 }, { time: '18:00', price: 66200 },
+      { time: '19:00', price: 65900 }, { time: '20:00', price: 66850 }
+    ]
+  },
+  ETH: {
+    price: 3520.00,
+    change: '+2.85%',
+    isPos: true,
+    data: [
+      { time: '09:00', price: 3100 }, { time: '10:00', price: 3150 },
+      { time: '11:00', price: 3120 }, { time: '12:00', price: 3080 },
+      { time: '13:00', price: 3200 }, { time: '14:00', price: 3250 },
+      { time: '15:00', price: 3220 }, { time: '16:00', price: 3350 },
+      { time: '17:00', price: 3410 }, { time: '18:00', price: 3480 },
+      { time: '19:00', price: 3450 }, { time: '20:00', price: 3520 }
+    ]
+  }
+};
 
 const OrderBook = ({ pair, price }) => {
    const multiplier = pair === 'BTC' ? 1 : 0.05;
@@ -80,6 +91,7 @@ const OrderBook = ({ pair, price }) => {
 
 const Trading = () => {
   const [activePair, setActivePair] = useState('BTC'); // 'BTC' or 'ETH'
+  const [cryptoData, setCryptoData] = useState(initialCryptoData);
   const [orderType, setOrderType] = useState('buy'); // 'buy' or 'sell'
   const [balance, setBalance] = useState(0);
   const [tradeAmount, setTradeAmount] = useState('');
@@ -92,7 +104,7 @@ const Trading = () => {
   const token = localStorage.getItem('finedgeToken');
   const navigate = useNavigate();
 
-  const currentPrice = activePair === 'BTC' ? 66850.00 : 3520.00;
+  const currentPrice = cryptoData[activePair].price;
   const currentTotal = tradeAmount ? (Number(tradeAmount) * currentPrice).toFixed(2) : '0.00';
   const assetBalance = portfolio.find(p => p.assetSymbol === activePair)?.amount || 0;
 
@@ -117,6 +129,33 @@ const Trading = () => {
     };
     fetchData();
   }, [token, txStatus]);
+
+  // Real-time crypto market feed effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCryptoData(prevData => {
+        const newData = { ...prevData };
+        Object.keys(newData).forEach(coin => {
+          const coinData = newData[coin];
+          const fluctuation = coinData.price * (Math.random() * 0.006 - 0.003); // Crypto fluctuates more
+          const newPrice = Math.max(0.01, coinData.price + fluctuation);
+          
+          const newChartData = [...coinData.data.slice(1), { time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), price: newPrice }];
+          const newChangePct = (((newPrice - coinData.data[0].price) / coinData.data[0].price) * 100).toFixed(2);
+          
+          newData[coin] = {
+            ...coinData,
+            price: newPrice,
+            change: `${newChangePct >= 0 ? '+' : ''}${newChangePct}%`,
+            isPos: newChangePct >= 0,
+            data: newChartData
+          };
+        });
+        return newData;
+      });
+    }, 1200); // crypto ticks slightly faster
+    return () => clearInterval(interval);
+  }, []);
 
   const executeTrade = async (e) => {
      e.preventDefault();
@@ -158,119 +197,151 @@ const Trading = () => {
      }, 1200);
   };
 
-  const chartData = activePair === 'BTC' ? btcData : ethData;
+  const chartData = cryptoData[activePair].data;
   const colorMap = activePair === 'BTC' ? { hex: '#F7931A', glow: 'from-orange-600/10' } : { hex: '#627EEA', glow: 'from-blue-600/10' };
 
   return (
     <div className="min-h-screen text-white/90 bg-[#070709]">
 
       {/* ─── MOBILE LAYOUT ─── */}
-      <div className="lg:hidden">
-        <div className="max-w-[430px] mx-auto px-4 py-5 space-y-4">
+      <div className="lg:hidden min-h-screen bg-[#121318] pt-14 pb-32 px-4 flex flex-col gap-6 relative overflow-hidden">
+        {/* Abstract Background Glows */}
+        <div className="absolute top-[-5%] left-[-10%] w-full h-[400px] bg-blue-600/10 blur-[120px] rounded-full -z-10 animate-pulse"></div>
+        <div className="absolute bottom-[20%] right-[-20%] w-[120%] h-[300px] bg-purple-600/10 blur-[100px] rounded-full -z-10"></div>
 
-          <div className="flex justify-end">
-            <button onClick={() => navigate('/invest')}
-              className="text-xs font-bold bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-xl active:scale-95 transition-all">
-              Equities →
-            </button>
-          </div>
-
-          {/* Pair Selector + Price */}
-          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <select value={activePair} onChange={(e) => setActivePair(e.target.value)}
-                className="bg-transparent text-white text-lg font-black outline-none appearance-none">
-                <option value="BTC">BTC / USD</option>
-                <option value="ETH">ETH / USD</option>
-              </select>
-              <span className={`px-2 py-1 ${activePair === 'BTC' ? 'bg-orange-500/20 text-orange-400' : 'bg-blue-500/20 text-blue-400'} font-black text-xs rounded-lg`}>
-                {activePair === 'BTC' ? '+5.21%' : '+2.85%'}
-              </span>
+        {/* Top Header & Navigation */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-[#1a1b22] border border-white/5 rounded-2xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-[#cca3ff]" />
             </div>
-            <p className="text-3xl font-black text-white">${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            <div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Global</p>
+              <h2 className="text-xl font-black text-white leading-tight">Trading</h2>
+            </div>
           </div>
+          <button onClick={() => navigate('/invest')} className="px-4 py-2 bg-[#1a1b22] border border-white/5 rounded-xl font-black text-[10px] uppercase text-gray-400 tracking-widest active:scale-95 transition-all">
+            Equities →
+          </button>
+        </div>
 
-          {/* Chart */}
-          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
-            <div className="h-[180px]">
+        {/* Dynamic Pair Info (Density) */}
+        <div className="bg-gradient-to-br from-[#1a1b22] to-[#0d0d12] border border-white/5 rounded-[2.5rem] p-6 relative overflow-hidden shadow-xl">
+           <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                 <div className={`w-8 h-8 rounded-xl ${activePair === 'BTC' ? 'bg-orange-500/10' : 'bg-blue-500/10'} flex items-center justify-center`}>
+                    <p className={`text-xs font-black ${activePair === 'BTC' ? 'text-orange-400' : 'text-blue-400'}`}>{activePair === 'BTC' ? '₿' : 'Ξ'}</p>
+                 </div>
+                 <select 
+                    value={activePair} 
+                    onChange={(e) => setActivePair(e.target.value)}
+                    className="bg-transparent text-white text-base font-black outline-none appearance-none cursor-pointer"
+                 >
+                    <option value="BTC">BTC / USD</option>
+                    <option value="ETH">ETH / USD</option>
+                 </select>
+              </div>
+              <div className={`px-2 py-1 ${cryptoData[activePair].isPos ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-500'} rounded-lg text-[10px] font-black uppercase`}>
+                 {cryptoData[activePair].change}
+              </div>
+           </div>
+           
+           <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-3xl font-black text-white">${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              <span className="text-[10px] text-gray-500 font-bold uppercase">24h Vol: $42.1B</span>
+           </div>
+
+           {/* Chart Container */}
+           <div className="h-[140px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="mGradientArea" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={colorMap.hex} stopOpacity={0.4} />
-                      <stop offset="100%" stopColor={colorMap.hex} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                  <XAxis dataKey="time" tick={{ fill: '#6b7280', fontSize: 9 }} tickLine={false} axisLine={false} dy={6} />
-                  <YAxis hide />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f0f13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }} labelStyle={{ color: '#9CA3AF' }} itemStyle={{ fontWeight: 700 }} />
-                  <Area type="monotone" dataKey="price" stroke={colorMap.hex} strokeWidth={3} fill="url(#mGradientArea)" dot={false} activeDot={{ r: 5, fill: '#fff', stroke: colorMap.hex, strokeWidth: 2 }} />
-                </AreaChart>
+                 <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
+                    <defs>
+                       <linearGradient id="mTradeGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={colorMap.hex} stopOpacity={0.4} />
+                          <stop offset="100%" stopColor={colorMap.hex} stopOpacity={0} />
+                       </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                    <XAxis dataKey="time" tick={{ fill: '#6b7280', fontSize: 9 }} tickLine={false} axisLine={false} dy={6} />
+                    <YAxis hide />
+                    <Tooltip 
+                       contentStyle={{ backgroundColor: '#0f0f13', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }} 
+                       labelStyle={{ color: '#9CA3AF' }} 
+                       itemStyle={{ fontWeight: 700 }} 
+                    />
+                    <Area type="monotone" dataKey="price" stroke={colorMap.hex} strokeWidth={3} fill="url(#mTradeGrad)" dot={false} activeDot={{ r: 5, fill: '#fff', stroke: colorMap.hex, strokeWidth: 2 }} />
+                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-            <div className="flex gap-1.5 mt-3 justify-end">
-              {['1H', '1D', '1W', '1M'].map(t => (
-                <button key={t} className="w-8 h-8 rounded-lg bg-white/5 text-gray-400 text-xs font-bold border border-white/5">{t}</button>
-              ))}
-            </div>
-          </div>
+           </div>
+        </div>
 
-          {/* Order Form */}
-          <div className="bg-[#0f0f13] border border-white/8 rounded-2xl p-4">
-            <div className="flex bg-black p-1 rounded-xl mb-4 border border-white/5">
+        {/* Order Execution Card */}
+        <div className="bg-[#1a1b22] border border-white/5 rounded-[2.5rem] p-6 shadow-2xl">
+           <div className="flex bg-[#121318] p-1 rounded-2xl mb-5 border border-white/5">
               <button onClick={() => setOrderType('buy')}
-                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${orderType === 'buy' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'text-gray-500'}`}>Buy</button>
+                className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${orderType === 'buy' ? 'bg-[#cca3ff] text-[#121318] shadow-[0_5px_15px_rgba(204,163,255,0.3)]' : 'text-gray-500'}`}>Buy</button>
               <button onClick={() => setOrderType('sell')}
-                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all ${orderType === 'sell' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'text-gray-500'}`}>Sell</button>
-            </div>
-            <form onSubmit={executeTrade} className="space-y-3">
+                className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${orderType === 'sell' ? 'bg-[#cca3ff] text-[#121318] shadow-[0_5px_15px_rgba(204,163,255,0.3)]' : 'text-gray-500'}`}>Sell</button>
+           </div>
+
+           <form onSubmit={executeTrade} className="space-y-4">
               <div className="relative">
-                <input type="number" step="0.01" min="0.01" required value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} placeholder="0.00"
-                  className="w-full bg-black border border-white/10 focus:border-white/30 rounded-xl py-3 pl-4 pr-16 text-xl font-black text-white outline-none" />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">{activePair}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 font-bold">Total</span>
-                <span className={`font-black ${orderType === 'buy' ? 'text-white' : 'text-green-400'}`}>${(Number(currentTotal)).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                 <p className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-black text-sm">$</p>
+                 <input type="number" step="0.01" min="0.01" required value={tradeAmount} onChange={(e) => setTradeAmount(e.target.value)} placeholder="0.00"
+                   className="w-full bg-[#121318] border border-white/5 focus:border-[#cca3ff]/50 rounded-2xl py-4 pl-10 pr-16 text-xl font-black text-white outline-none transition-all" />
+                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#cca3ff] font-black text-xs uppercase">{activePair}</span>
               </div>
 
-              {/* Validation Warnings Mobile */}
-              {orderType === 'buy' && Number(currentTotal) > balance && (
-                <div className="text-red-400 text-xs font-bold bg-red-500/10 p-2 rounded-xl text-center border border-red-500/20">
-                  Insufficient funds
-                </div>
-              )}
-              {orderType === 'sell' && (Number(tradeAmount) > assetBalance) && (
-                <div className="text-red-400 text-xs font-bold bg-red-500/10 p-2 rounded-xl text-center border border-red-500/20">
-                  Insufficient {activePair} balance
-                </div>
-              )}
-
-              <div className="space-y-2 pt-2">
-                <div className="flex justify-between text-xs bg-white/5 p-3 rounded-xl">
-                  <span className="text-gray-500 font-bold">Trading Balance</span>
-                  <span className="text-white font-black">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between text-xs bg-white/5 p-3 rounded-xl border border-white/5">
-                  <span className="text-gray-500 font-bold">{activePair} Owned</span>
-                  <span className="text-[#cca3ff] font-black">{assetBalance.toFixed(4)} {activePair}</span>
-                </div>
+              <div className="flex justify-between items-center px-1">
+                 <div className="flex flex-col">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Order Total</span>
+                    <span className="text-sm font-black text-white">${(Number(currentTotal)).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                 </div>
+                 <div className="flex flex-col text-right">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Available</span>
+                    <span className="text-[10px] text-green-400 font-black uppercase">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                 </div>
               </div>
+
+              {/* Dynamic Error Messaging (Density) */}
+              {(orderType === 'buy' && Number(currentTotal) > balance) || (orderType === 'sell' && (Number(tradeAmount) > assetBalance)) ? (
+                <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-2xl flex items-center gap-2">
+                   <AlertOctagon className="w-4 h-4 text-red-500" />
+                   <p className="text-[10px] text-red-400 font-black uppercase">Insufficient {orderType === 'buy' ? 'USD Liquidity' : `${activePair} Balance`}</p>
+                </div>
+              ) : null}
 
               <button 
                 type="submit" 
-                disabled={
-                  (orderType === 'buy' && Number(currentTotal) > balance) || 
-                  (orderType === 'sell' && (Number(tradeAmount) > assetBalance || Number(tradeAmount) <= 0))
-                }
-                className={`w-full py-4 mt-4 rounded-2xl text-white text-base font-black transition-all active:scale-95 disabled:opacity-50 ${orderType === 'buy' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>
-                {orderType === 'buy' ? `Buy ${activePair}` : `Sell ${activePair}`}
+                disabled={txStatus === 'loading'}
+                className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 shadow-xl ${txStatus === 'loading' ? 'bg-gray-800 text-gray-600' : 'bg-white text-black hover:bg-gray-100'}`}
+              >
+                {txStatus === 'loading' ? 'Executing Order...' : `Confirm ${orderType} Order`}
               </button>
-            </form>
-          </div>
-
+           </form>
         </div>
+
+        {/* Market Insights (Information Density) */}
+        <div className="flex flex-col gap-3">
+           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Market Sentiment</h3>
+           <div className="grid grid-cols-2 gap-3">
+              <div className="bg-[#1a1b22] border border-white/5 rounded-[2.5rem] p-5">
+                 <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-[10px] text-gray-500 font-bold uppercase">Buyers</span>
+                 </div>
+                 <p className="text-base font-black text-white">62.5%</p>
+              </div>
+              <div className="bg-[#1a1b22] border border-white/5 rounded-[2.5rem] p-5">
+                 <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                    <span className="text-[10px] text-gray-500 font-bold uppercase">Sellers</span>
+                 </div>
+                 <p className="text-base font-black text-white">37.5%</p>
+              </div>
+           </div>
+        </div>
+
       </div>
 
       {/* ─── DESKTOP LAYOUT (unchanged) ─── */}
@@ -319,8 +390,8 @@ const Trading = () => {
                           <option value="BTC">BTC / USD</option>
                           <option value="ETH">ETH / USD</option>
                        </select>
-                       <span className={`px-2 py-1 sm:px-4 sm:py-2 ${activePair === 'BTC' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-blue-500/20 text-blue-400 border-blue-500/30'} font-black text-sm sm:text-xl rounded-xl border`}>
-                          {activePair === 'BTC' ? '+5.21%' : '+2.85%'}
+                       <span className={`px-2 py-1 sm:px-4 sm:py-2 ${cryptoData[activePair].isPos ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-500 border-red-500/30'} font-black text-sm sm:text-xl rounded-xl border`}>
+                          {cryptoData[activePair].change}
                        </span>
                     </div>
                     <p className="text-2xl sm:text-4xl text-white font-bold">${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
@@ -474,6 +545,7 @@ const Trading = () => {
          </div>
 
       </div>
+      </div>
 
       {/* Massive Transaction Overlays */}
       {txStatus !== 'idle' && (
@@ -527,8 +599,7 @@ const Trading = () => {
       )}
 
     </div>
-  </div>
-);
+  );
 };
 
 export default Trading;
